@@ -5,7 +5,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
 class MessengerApplicationTests {
-
+	// TODO: Тестирование автоконфигурации
 	@Test
 	void contextLoads() {
 	}

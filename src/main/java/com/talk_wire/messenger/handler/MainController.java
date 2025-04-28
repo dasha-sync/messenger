@@ -15,7 +15,6 @@ public class MainController {
     @MessageMapping("/chat")
     @SendTo("/topic/messages")
     public String processMessageFromClient(String message) {
-        System.out.println("1############### ");
         return "{\"response\" : \"" + chatService.answerMessage(message) + "\"}";
     }
 }
