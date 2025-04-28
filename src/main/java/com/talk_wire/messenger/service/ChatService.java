@@ -15,7 +15,6 @@ public class ChatService {
             int index = ThreadLocalRandom.current().nextInt(characters.length());
             result.append(characters.charAt(index));
         }
-        System.out.println("############### " + result.toString());
         return result.toString();
     }
 }
