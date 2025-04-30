@@ -1,4 +1,4 @@
-package com.talk_wire.messenger.handler;
+package com.talk_wire.messenger.controller;
 
 import com.talk_wire.messenger.service.ChatService;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 @RequiredArgsConstructor
-public class MainController {
+public class ChatController {
 
     private final ChatService chatService;
 

@@ -1,8 +1,6 @@
-package com.talk_wire.messenger.models;
+package com.talk_wire.messenger.security;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.talk_wire.messenger.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
@@ -15,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class UserDetailsImplementation implements UserDetails {
     private Long id;
-    private String name;
+    private String username;
     private String email;
     private String password;
 
@@ -34,31 +32,31 @@ public class UserDetailsImplementation implements UserDetails {
 
     @Override
     public String getPassword() {
-        return "";
+        return password;
     }
 
     @Override
     public String getUsername() {
-        return "";
+        return username;
     }
 
     @Override
     public boolean isAccountNonExpired() {
-        return UserDetails.super.isAccountNonExpired();
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return UserDetails.super.isCredentialsNonExpired();
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
+        return true;
     }
 }
