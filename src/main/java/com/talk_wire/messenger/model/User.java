@@ -1,4 +1,4 @@
-package com.talk_wire.messenger.models;
+package com.talk_wire.messenger.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
