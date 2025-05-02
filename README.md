@@ -1,5 +1,5 @@
 # Talk Wire
-.aka Telegram
+a.k.a. Telegram
 
 ## Environment:
 - java 17
