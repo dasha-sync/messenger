@@ -14,23 +14,17 @@ import lombok.Builder;
 import lombok.Data;
 
 @Data
-@Table(name = "users")
+@Table(name = "chats")
 @Entity
 @Builder
-public class User {
+public class Chat {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @Column
-  private String username;
+  private String name;
 
-  @Column
-  private String email;
-
-  @Column
-  private String password;
-
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+  @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL)
   private List<ChatUser> chatUsers = new ArrayList<>();
 }
