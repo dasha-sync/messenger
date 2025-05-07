@@ -58,12 +58,13 @@ public class SecurityController {
     }
 
     String hashed = passwordEncoder.encode(signupDto.getPassword());
-    User user = new User();
-    user.setUsername(signupDto.getUsername());
-    user.setEmail(signupDto.getEmail());
-    user.setPassword(hashed);
+    User user = User.builder()
+        .username(signupDto.getUsername())
+        .email(signupDto.getEmail())
+        .password(hashed)
+        .build();
     userRepository.save(user);
-    
+
     return ResponseEntity.ok("Signup successfully completed");
   }
 
