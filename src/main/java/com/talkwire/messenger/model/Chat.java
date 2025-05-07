@@ -10,13 +10,11 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Table(name = "chats")
 @Entity
-@Builder
 public class Chat {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
