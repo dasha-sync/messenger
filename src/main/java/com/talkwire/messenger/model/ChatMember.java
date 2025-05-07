@@ -11,18 +11,18 @@ import jakarta.persistence.Table;
 import lombok.Data;
 
 @Entity
-@Table(name = "chat_users")
+@Table(name = "chat_members")
 @Data
-public class ChatUser {
+public class ChatMember {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
-
-  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "chat_id", nullable = false)
   private Chat chat;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 }
