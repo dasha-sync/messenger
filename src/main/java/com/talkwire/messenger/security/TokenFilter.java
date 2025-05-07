@@ -14,31 +14,16 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/**
- * Filter that checks for a JWT in the Authorization header and
- * sets authentication in the context if valid.
- */
 @Component
 public class TokenFilter extends OncePerRequestFilter {
-
   private final JwtTokenProvider jwtTokenProvider;
   private final UserDetailsService userDetailsService;
 
-  /**
-   * Constructs a TokenFilter with required dependencies.
-   *
-   * @param jwtTokenProvider     handles token parsing
-   * @param userDetailsService   loads user details by username
-   */
   public TokenFilter(JwtTokenProvider jwtTokenProvider, UserDetailsService userDetailsService) {
     this.jwtTokenProvider = jwtTokenProvider;
     this.userDetailsService = userDetailsService;
   }
 
-  /**
-   * Intercepts each request, extracts and validates JWT, and
-   * sets authentication in context if valid.
-   */
   @Override
   protected void doFilterInternal(
           @NonNull HttpServletRequest request,

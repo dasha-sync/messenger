@@ -20,64 +20,34 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Handles authentication and user registration requests.
- */
 @RestController
 @RequestMapping("/auth")
 public class SecurityController {
-
   private UserRepository userRepository;
   private PasswordEncoder passwordEncoder;
   private AuthenticationManager authenticationManager;
   private JwtTokenProvider jwtTokenProvider;
 
-  /**
-   * Sets the password encoder.
-   *
-   * @param passwordEncoder the password encoder
-   */
   @Autowired
   public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
     this.passwordEncoder = passwordEncoder;
   }
 
-  /**
-   * Sets the user repository.
-   *
-   * @param userRepository the user repository
-   */
   @Autowired
   public void setUserRepository(UserRepository userRepository) {
     this.userRepository = userRepository;
   }
 
-  /**
-   * Sets the authentication manager.
-   *
-   * @param authenticationManager the authentication manager
-   */
   @Autowired
   public void setAuthenticationManager(AuthenticationManager authenticationManager) {
     this.authenticationManager = authenticationManager;
   }
 
-  /**
-   * Sets the JWT token provider.
-   *
-   * @param jwtTokenProvider the JWT token provider
-   */
   @Autowired
   public void setJwtCore(JwtTokenProvider jwtTokenProvider) {
     this.jwtTokenProvider = jwtTokenProvider;
   }
 
-  /**
-   * Handles user signup by registering a new user.
-   *
-   * @param signupDto the user signup request
-   * @return ResponseEntity with success or error message
-   */
   @PostMapping("/signup")
   ResponseEntity<?> signup(@RequestBody SignupRequest signupDto) {
     if (userRepository.existsUserByUsername(signupDto.getUsername())) {
@@ -97,13 +67,6 @@ public class SecurityController {
     return ResponseEntity.ok("Signup successfully completed");
   }
 
-  /**
-   * Handles user sign-in by authenticating the user and generating a JWT token.
-   *
-   * @param singinDto the user signin request
-   * @return ResponseEntity with the generated JWT token or unauthorized status
-   * @throws NoSuchAlgorithmException if algorithm issues occur during sign-in
-   */
   @PostMapping("/signin")
   ResponseEntity<?> signin(@RequestBody SigninRequest singinDto) throws NoSuchAlgorithmException {
     Authentication authentication = null;
