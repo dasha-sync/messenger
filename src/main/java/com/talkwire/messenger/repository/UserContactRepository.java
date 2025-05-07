@@ -20,6 +20,6 @@ public interface UserContactRepository extends JpaRepository<UserContact, Long> 
 
   void deleteByUserIdAndContactId(Long userId, Long contactId);
 
-  @Query("SELECT cu FROM user_contacts uc WHERE uc.user_id = :userId AND uc.contact_id = :contactId")
-  Optional<UserContact> findChatUserByUserIdAndContactId(@Param("userId") Long userId, @Param("contactId") Long contactId);
+  @Query("SELECT uc FROM UserContact uc WHERE uc.user.id = :userId AND uc.contact.id = :contactId")
+  Optional<UserContact> findUserContactByUserIdAndContactId(@Param("userId") Long userId, @Param("contactId") Long contactId);
 }

@@ -1,21 +1,26 @@
 package com.talkwire.messenger;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-/**
- * Test class for verifying the application context loading.
- * Ensures that the Spring Boot application starts without errors.
- */
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
+
 @SpringBootTest
 class MessengerApplicationTests {
 
-  /**
-   * Test to verify if the Spring application context loads successfully.
-   * This test ensures the application starts without any issues.
-   */
+  @Autowired
+  private ApplicationContext context;
+
   @Test
   void contextLoads() {
-    // TODO: Test auto-configuration
+    assertNotNull(context);
+  }
+
+  @Test
+  void testAutoConfiguration() {
+    assertNotNull(context.getBean("dataSource"));
+    assertNotNull(context.getBean("entityManagerFactory")); // для JPA
   }
 }
