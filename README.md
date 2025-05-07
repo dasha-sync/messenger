@@ -4,18 +4,17 @@ a.k.a. Telegram
 ## Environment:
 - java 17
 - spring 3.4.4
-- maven
 - swagger
 - websockets
 - postgresql
 - rebbitmq
 
-## Run all containers in the docker.
+## Run in docker.
 ```sh
  $ docker compose up --build
 ```
 
-## Run for local development, and dependencies in the docker.
+## Or local development.
 ```sh
  $ docker compose build
  $ docker compose up messenger-db-1
