@@ -9,17 +9,19 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.Set;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Data
 @Table(name = "chats")
 @Entity
+@RequiredArgsConstructor
 public class Chat {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @Column
-  private String name;
+  private String name = "default";
 
   @OneToMany(mappedBy = "chat")
   private Set<Message> messages;
