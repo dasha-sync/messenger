@@ -11,7 +11,12 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ChatMemberRepository extends JpaRepository<ChatMember, Long> {
-  void deleteChatMemberByChatIdAndUserId(Long chatId, Long userId);
+  boolean existsByUserIdAndChatId(Long userId, Long chatId);
+
+  void deleteAllByChatId(Long chatId);
+
+  @Query("SELECT cm.chat FROM ChatMember cm WHERE cm.user.id = :userId")
+  List<Chat> findChatsByUserId(@Param("userId") Long userId);
 
   @Query("SELECT cm1.chat FROM ChatMember cm1 "
       + "JOIN ChatMember cm2 ON cm1.chat = cm2.chat "
