@@ -1,5 +1,6 @@
 package com.talkwire.messenger.repository;
 
+import com.talkwire.messenger.model.Chat;
 import com.talkwire.messenger.model.ChatMember;
 import java.util.List;
 import java.util.Optional;
@@ -11,4 +12,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ChatMemberRepository extends JpaRepository<ChatMember, Long> {
   void deleteChatMemberByChatIdAndUserId(Long chatId, Long userId);
+
+  @Query("SELECT cm1.chat FROM ChatMember cm1 "
+      + "JOIN ChatMember cm2 ON cm1.chat = cm2.chat "
+      + "WHERE cm1.user.id = :userId1 AND cm2.user.id = :userId2")
+  List<Chat> findChatsByTwoUsers(@Param("userId1") Long userId1, @Param("userId2") Long userId2);
 }
