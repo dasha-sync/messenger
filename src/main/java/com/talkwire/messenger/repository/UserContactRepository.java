@@ -10,7 +10,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserContactRepository extends JpaRepository<UserContact, Long> {
-  List<UserContact> findUserContactByContactId(Long contactId);
-
-  void deleteUserContactByUserIdAndContactId(Long userId, Long contactId);
 }
