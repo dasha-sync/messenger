@@ -1,20 +1,23 @@
 package com.talkwire.messenger.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
 @Data
 @Table(name = "chats")
 @Entity
-@RequiredArgsConstructor
 public class Chat {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,9 +26,41 @@ public class Chat {
   @Column
   private String name = "default";
 
-  @OneToMany(mappedBy = "chat")
-  private Set<Message> messages;
+  @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Message> messages = new ArrayList<>();
 
-  @OneToMany(mappedBy = "chat")
-  private Set<ChatMember> members;
+  @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
+  @JsonManagedReference
+  private List<ChatMember> chatMembers = new ArrayList<>();
+
+  public void addChatMember(ChatMember chatMember) {
+    chatMembers.add(chatMember);
+    chatMember.setChat(this);
+  }
+
+  public void addMessage(Message message) {
+    messages.add(message);
+    message.setChat(this);
+  }
+
+  public String getName(User currentUser) {
+    if (chatMembers == null || chatMembers.isEmpty()) {
+      return name;
+    }
+
+    if (chatMembers.size() > 2) {
+      return name;
+    }
+
+    if (chatMembers.size() == 2) {
+      return chatMembers.stream()
+        .map(ChatMember::getUser)
+        .filter(user -> !user.getId().equals(currentUser.getId()))
+        .map(User::getUsername)
+        .findFirst()
+        .orElse(name);
+    }
+
+    return "favorites";
+  }
 }
