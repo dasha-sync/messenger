@@ -1,4 +1,4 @@
-package com.talkwire.messenger.dto.user;
+package com.talkwire.messenger.dto.chat;
 
 import lombok.Data;
 
