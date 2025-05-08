@@ -91,9 +91,12 @@ public class ChatController {
       return ResponseEntity.badRequest().body("Cannot create chat with yourself");
     }
 
-    List<Chat> existingChats = chatMemberRepository.findChatsByTwoUsers(currentUser.getId(), targetUser.getId());
+    List<Chat> existingChats = chatMemberRepository
+        .findChatsByTwoUsers(currentUser.getId(), targetUser.getId());
+
     if (!existingChats.isEmpty()) {
-      return ResponseEntity.status(HttpStatus.CONFLICT).body("Chat already exists between these users");
+      return ResponseEntity.status(HttpStatus.CONFLICT)
+          .body("Chat already exists between these users");
     }
 
     Chat chat = new Chat();
