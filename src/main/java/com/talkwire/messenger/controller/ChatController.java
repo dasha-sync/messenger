@@ -2,7 +2,6 @@ package com.talkwire.messenger.controller;
 
 import com.talkwire.messenger.dto.chat.ChatDto;
 import com.talkwire.messenger.dto.chat.CreateChatRequest;
-import com.talkwire.messenger.dto.chat.DeleteChatRequest;
 import com.talkwire.messenger.model.Chat;
 import com.talkwire.messenger.model.ChatMember;
 import com.talkwire.messenger.model.User;
@@ -46,7 +45,6 @@ public class ChatController {
     return Map.of("response", chatService.answerMessage(message));
   }
 
-
   @GetMapping("/chats")
   public ResponseEntity<?> getUserChats(Principal principal) {
     User currentUser = getCurrentUser(principal);
@@ -57,15 +55,12 @@ public class ChatController {
 
     return ResponseEntity.ok(Map.of(
         "user", currentUser.getUsername(),
-        "chats", chats
-    ));
+        "chats", chats));
   }
-
 
   @GetMapping("/chats/{chatId}")
   public ResponseEntity<?> getChatById(@PathVariable Long chatId, Principal principal) {
-    User currentUser = userRepository.findUserByUsername(principal.getName())
-        .orElseThrow(() -> new RuntimeException("Current user not found"));
+    User currentUser = getCurrentUser(principal);
 
     if (!chatMemberRepository.existsByUserIdAndChatId(currentUser.getId(), chatId)) {
       return ResponseEntity.status(403).body("Access denied");
@@ -110,38 +105,30 @@ public class ChatController {
 
     return ResponseEntity.ok(Map.of(
         "chatId", chat.getId(),
-        "message", chat.getName(currentUser) + " chat created successfully"
-    ));
+        "message", chat.getName(currentUser) + " chat created successfully"));
   }
-
 
   @DeleteMapping("/chats/{chatId}/delete")
   @Transactional
   public ResponseEntity<?> deleteChat(@PathVariable Long chatId, Principal principal) {
     try {
-      User currentUser = userRepository.findUserByUsername(principal.getName())
-          .orElseThrow(() -> new RuntimeException("Current user not found"));
+      User currentUser = getCurrentUser(principal);
 
       if (!chatMemberRepository.existsByUserIdAndChatId(currentUser.getId(), chatId)) {
         return ResponseEntity.status(403).body("Access denied: You are not a member of this chat");
       }
-
-      chatMemberRepository.deleteAllByChatId(chatId);
-      messageRepository.deleteAllByChatId(chatId);
 
       chatRepository.deleteById(chatId);
 
       if (chatRepository.existsById(chatId)) {
         return ResponseEntity.badRequest()
             .body(Map.of(
-                "message", "Chat not deleted"
-            ));
+                "message", "Chat not deleted"));
       }
 
       return ResponseEntity.ok()
           .body(Map.of(
-              "message", "Chat deleted successfully"
-          ));
+              "message", "Chat deleted successfully"));
     } catch (RuntimeException e) {
       return ResponseEntity.badRequest()
           .body("Error deleting chat: " + e.getMessage());

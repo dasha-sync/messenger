@@ -7,12 +7,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.Data;
 
 @Data
@@ -54,11 +52,11 @@ public class Chat {
 
     if (chatMembers.size() == 2) {
       return chatMembers.stream()
-        .map(ChatMember::getUser)
-        .filter(user -> !user.getId().equals(currentUser.getId()))
-        .map(User::getUsername)
-        .findFirst()
-        .orElse(name);
+          .map(ChatMember::getUser)
+          .filter(user -> !user.getId().equals(currentUser.getId()))
+          .map(User::getUsername)
+          .findFirst()
+          .orElse(name);
     }
 
     return "favorites";
