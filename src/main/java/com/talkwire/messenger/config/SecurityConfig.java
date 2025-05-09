@@ -2,7 +2,7 @@ package com.talkwire.messenger.config;
 
 import com.talkwire.messenger.security.TokenFilter;
 import com.talkwire.messenger.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -23,25 +23,11 @@ import org.springframework.web.cors.CorsConfiguration;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@AllArgsConstructor
 public class SecurityConfig {
   private TokenFilter tokenFilter;
   private UserService userService;
   private final PasswordEncoder passwordEncoder;
-
-  public SecurityConfig(PasswordEncoder passwordEncoder) {
-    this.passwordEncoder = passwordEncoder;
-  }
-
-
-  @Autowired
-  public void setUserService(UserService userService) {
-    this.userService = userService;
-  }
-
-  @Autowired
-  public void setTokenFilter(TokenFilter tokenFilter) {
-    this.tokenFilter = tokenFilter;
-  }
 
   @Bean
   public AuthenticationManager authenticationManager(AuthenticationConfiguration auth)
@@ -49,28 +35,21 @@ public class SecurityConfig {
     return auth.getAuthenticationManager();
   }
 
-  @Autowired
-  public void configure(AuthenticationManagerBuilder auth) throws Exception {
-    auth.userDetailsService(userService).passwordEncoder(passwordEncoder);
-  }
-
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer
-                    .configurationSource(request -> new CorsConfiguration()
-                            .applyPermitDefaultValues()))
-            .exceptionHandling(exceptions -> exceptions
-                    .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
-            .sessionManagement(session -> session
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(authorize -> authorize
-                    .requestMatchers("/auth/**").permitAll()
-                    .requestMatchers("/secured/**").authenticated()
-                    .requestMatchers("/ws/**").authenticated()
-                    .anyRequest().permitAll())
-            .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
+        .csrf(AbstractHttpConfigurer::disable)
+        .cors(cors -> cors.configurationSource(request ->
+            new CorsConfiguration().applyPermitDefaultValues()))
+        .exceptionHandling(exceptions -> exceptions
+            .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+        .sessionManagement(session -> session
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(authorize -> authorize
+            .requestMatchers("/auth/**").permitAll()
+            .requestMatchers("/secured/**", "/ws/**").authenticated()
+                .anyRequest().permitAll())
+        .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
   }
