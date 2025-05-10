@@ -3,11 +3,8 @@ package com.talkwire.messenger.service;
 import com.talkwire.messenger.model.User;
 import com.talkwire.messenger.repository.UserRepository;
 import com.talkwire.messenger.security.UserDetailsImplementation;
-import lombok.AllArgsConstructor;
-import lombok.Setter;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import lombok.*;
+import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
 
 @Setter
