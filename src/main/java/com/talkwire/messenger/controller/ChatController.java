@@ -1,32 +1,17 @@
 package com.talkwire.messenger.controller;
 
-import com.talkwire.messenger.dto.chat.ChatDto;
-import com.talkwire.messenger.dto.chat.CreateChatRequest;
-import com.talkwire.messenger.model.Chat;
-import com.talkwire.messenger.model.ChatMember;
-import com.talkwire.messenger.model.User;
-import com.talkwire.messenger.repository.ChatMemberRepository;
-import com.talkwire.messenger.repository.ChatRepository;
-import com.talkwire.messenger.repository.MessageRepository;
-import com.talkwire.messenger.repository.UserRepository;
+import com.talkwire.messenger.dto.chat.*;
+import com.talkwire.messenger.model.*;
+import com.talkwire.messenger.repository.*;
 import com.talkwire.messenger.service.ChatService;
 import jakarta.transaction.Transactional;
 import java.security.Principal;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.http.*;
+import org.springframework.messaging.handler.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/secured")
@@ -108,7 +93,7 @@ public class ChatController {
         "message", chat.getName(currentUser) + " chat created successfully"));
   }
 
-  @DeleteMapping("/chats/{chatId}/delete")
+  @DeleteMapping("/chats/{chatId}/destroy")
   @Transactional
   public ResponseEntity<?> deleteChat(@PathVariable Long chatId, Principal principal) {
     try {

@@ -1,7 +1,6 @@
 package com.talkwire.messenger.dto.chat;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 
 @Data
 @AllArgsConstructor
