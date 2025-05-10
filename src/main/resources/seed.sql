@@ -35,7 +35,6 @@ CREATE TABLE messages (
     text text not null,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
-    UNIQUE (user_id, chat_id)
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
 )
 
