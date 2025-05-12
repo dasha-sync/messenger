@@ -49,3 +49,15 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+
+  notify-infra:
+    needs: [checkstyle, test, coverage]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger infra workflow
+        run: |
+          curl -X POST https://api.github.com/repos/YOU/infra/dispatches \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.INFRA_TOKEN }}" \
+            -d '{"event_type":"update-submodules"}'
