@@ -1,6 +1,7 @@
 package com.talkwire.messenger.service;
 
 import com.talkwire.messenger.dto.user.*;
+import com.talkwire.messenger.exception.UserAlreadyExistsException;
 import com.talkwire.messenger.model.User;
 import com.talkwire.messenger.repository.UserRepository;
 import com.talkwire.messenger.security.JwtTokenProvider;
@@ -22,14 +23,12 @@ public class AuthService {
   private final UserService userService;
 
   public UserResponse signup(SignupRequest signupDto) {
-    // TODO: UserAlreadyExistsException("Username already taken");
     if (userRepository.existsUserByUsername(signupDto.getUsername())) {
-      throw new RuntimeException("Username already taken");
+      throw new UserAlreadyExistsException("Username already taken");
     }
 
-    // TODO: UserAlreadyExistsException("Email already registered");
     if (userRepository.existsUserByEmail(signupDto.getEmail())) {
-      throw new RuntimeException("Email already registered");
+      throw new UserAlreadyExistsException("Email already registered");
     }
 
     User user = new User();

@@ -1,8 +1,7 @@
 package com.talkwire.messenger.service;
 
-import static org.springframework.http.HttpStatus.*;
-
 import com.talkwire.messenger.dto.user.*;
+import com.talkwire.messenger.exception.*;
 import com.talkwire.messenger.model.User;
 import com.talkwire.messenger.repository.UserRepository;
 import com.talkwire.messenger.security.*;
@@ -16,7 +15,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @AllArgsConstructor
@@ -42,14 +40,12 @@ public class UserService {
     User currentUser = getCurrentUser(principal);
     validateUserAccess(userId, currentUser);
 
-    // TODO: UserUpdateException("Current password is incorrect");
     if (!passwordEncoder.matches(request.getCurrentPassword(), currentUser.getPassword())) {
-      throw new ResponseStatusException(FORBIDDEN, "Current password is incorrect");
+      throw new UserUpdateException("Current password is incorrect");
     }
 
-    // TODO: UserUpdateException("No fields to update");
     if (!applyUpdates(currentUser, request)) {
-      throw new ResponseStatusException(FORBIDDEN, "No fields to update");
+      throw new UserUpdateException("No fields to update");
     }
 
     userRepository.save(currentUser);
@@ -67,8 +63,7 @@ public class UserService {
 
       return new AuthResponse(jwt, mapToUserDto(currentUser));
     } catch (BadCredentialsException | NoSuchAlgorithmException e) {
-      // TODO: UserUpdateException("Invalid credentials");
-      throw new RuntimeException("Invalid credentials");
+      throw new UserUpdateException("Invalid credentials");
     }
   }
 
@@ -77,18 +72,16 @@ public class UserService {
     User currentUser = getCurrentUser(principal);
     validateUserAccess(userId, currentUser);
 
-    // TODO: UserDeleteException("Wrong password");
     if (!passwordEncoder.matches(request.getPassword(), currentUser.getPassword())) {
-      throw new ResponseStatusException(FORBIDDEN, "Current password is incorrect");
+      throw new UserDeleteException("Wrong password");
     }
 
     userRepository.delete(currentUser);
   }
 
-  // TODO: UserNotFoundException("Current user not found")
   public User getCurrentUser(Principal principal) {
     return userRepository.findUserByUsername(principal.getName())
-        .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Current user not found"));
+        .orElseThrow(() -> new UserNotFoundException("Current user not found"));
   }
 
   public UserResponse mapToUserDto(User user) {
@@ -99,10 +92,9 @@ public class UserService {
     return value == null || value.isBlank();
   }
 
-  // TODO: UserUpdateException("You can only update your own account");
   private void validateUserAccess(Long userId, User currentUser) {
     if (!currentUser.getId().equals(userId)) {
-      throw new ResponseStatusException(FORBIDDEN, "You can only update your own account");
+      throw new UserUpdateException("You can only update your own account");
     }
   }
 
