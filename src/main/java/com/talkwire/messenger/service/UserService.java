@@ -30,7 +30,7 @@ public class UserService implements UserDetailsService {
   // TODO: UserNotFoundException("Current user not found")
   public User getCurrentUser(Principal principal) {
     return userRepository.findUserByUsername(principal.getName())
-        .orElseThrow(() -> new ResponseStatusException(NOT_FOUND,"Current user not found"));
+        .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Current user not found"));
   }
 }
 
