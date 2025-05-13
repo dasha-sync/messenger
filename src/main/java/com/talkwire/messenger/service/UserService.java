@@ -2,6 +2,7 @@ package com.talkwire.messenger.service;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
+import com.talkwire.messenger.dto.user.UserResponse;
 import com.talkwire.messenger.model.User;
 import com.talkwire.messenger.repository.UserRepository;
 import com.talkwire.messenger.security.UserDetailsImplementation;
@@ -31,6 +32,10 @@ public class UserService implements UserDetailsService {
   public User getCurrentUser(Principal principal) {
     return userRepository.findUserByUsername(principal.getName())
         .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Current user not found"));
+  }
+
+  public UserResponse mapToUserDto(User user) {
+    return new UserResponse(user.getId(), user.getUsername(), user.getEmail());
   }
 }
 
