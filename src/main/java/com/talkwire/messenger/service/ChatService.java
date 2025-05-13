@@ -1,6 +1,7 @@
 package com.talkwire.messenger.service;
 
 import com.talkwire.messenger.dto.chat.*;
+import com.talkwire.messenger.exception.*;
 import com.talkwire.messenger.model.*;
 import com.talkwire.messenger.repository.*;
 import jakarta.transaction.Transactional;
@@ -56,21 +57,18 @@ public class ChatService {
   @Transactional
   public ChatResponse createChat(@RequestBody CreateChatRequest request, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
-    // TODO: UserNotFoundException("Target user not found"));
     User targetUser = userRepository.findUserByUsername(request.getUsername())
-        .orElseThrow(() -> new RuntimeException("Target user not found"));
+        .orElseThrow(() -> new UserNotFoundException("Target user not found"));
 
-    // TODO: ChatOperationException("Chat already exists between these users"));
     if (currentUser.getId().equals(targetUser.getId())) {
-      throw new RuntimeException("Cannot create chat with yourself");
+      throw new ChatOperationException("Chat with yourself feature in develop");
     }
 
     List<Chat> existingChats = chatMemberRepository
         .findChatsByTwoUsers(currentUser.getId(), targetUser.getId());
 
-    // TODO: ChatOperationException("Target user not found");
     if (!existingChats.isEmpty()) {
-      throw new RuntimeException("Chat already exists between these users");
+      throw new ChatOperationException("Chat already exists between these users");
     }
 
     Chat chat = new Chat();
@@ -78,9 +76,8 @@ public class ChatService {
     createChatMember(chat, targetUser);
     chatRepository.save(chat);
 
-    // TODO: ChatOperationException("Chat members not created"));
     if (chat.getChatMembers().isEmpty()) {
-      throw new RuntimeException("Chat members not created");
+      throw new ChatOperationException("Chat members not created");
     }
 
     return new ChatResponse(chat.getId(), chat.getName(currentUser));
@@ -93,9 +90,8 @@ public class ChatService {
 
     chatRepository.deleteById(chatId);
 
-    // TODO: ChatOperationException("Failed to delete chat")
     if (chatRepository.existsById(chatId)) {
-      throw new RuntimeException("Failed to delete chat");
+      throw new ChatOperationException("Failed to delete chat");
     }
   }
 
@@ -106,10 +102,9 @@ public class ChatService {
     chat.addChatMember(chatMember);
   }
 
-  // TODO:  ChatAccessDeniedException("Access denied: You are not a member of this chat");
   private void validateChatAccess(Long userId, Long chatId) {
     if (!chatMemberRepository.existsByUserIdAndChatId(userId, chatId)) {
-      throw new RuntimeException("Access denied: You are not a member of this chat");
+      throw new ChatAccessDeniedException("Access denied: You are not a member of this chat");
     }
   }
 }
