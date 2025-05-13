@@ -1,7 +1,7 @@
 package com.talkwire.messenger.config;
 
 import com.talkwire.messenger.security.TokenFilter;
-import com.talkwire.messenger.service.UserService;
+import com.talkwire.messenger.service.UserSecureService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.*;
 import org.springframework.http.HttpStatus;
@@ -23,7 +23,7 @@ import org.springframework.web.cors.CorsConfiguration;
 @AllArgsConstructor
 public class SecurityConfig {
   private TokenFilter tokenFilter;
-  private UserService userService;
+  private UserSecureService userSecureService;
   private final PasswordEncoder passwordEncoder;
 
   @Bean
