@@ -11,6 +11,7 @@ import org.springframework.messaging.handler.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+// TODO: Добавить Валидации - везде
 @RestController
 @RequestMapping("/secured")
 @PreAuthorize("isAuthenticated()")
@@ -38,7 +39,6 @@ public class ChatController {
     return ResponseEntity.ok(new ApiResponse<>("Chat retrieved successfully", chat));
   }
 
-  // TODO: Добавить @Valid
   @PostMapping("/chats/create")
   public ResponseEntity<ApiResponse<ChatResponse>> createChat(
       @RequestBody CreateChatRequest request,

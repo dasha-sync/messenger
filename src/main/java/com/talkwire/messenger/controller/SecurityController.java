@@ -1,60 +1,27 @@
 package com.talkwire.messenger.controller;
 
+import com.talkwire.messenger.dto.common.ApiResponse;
 import com.talkwire.messenger.dto.user.*;
-import com.talkwire.messenger.model.User;
-import com.talkwire.messenger.repository.UserRepository;
-import com.talkwire.messenger.security.JwtTokenProvider;
-import java.security.NoSuchAlgorithmException;
+import com.talkwire.messenger.service.AuthService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.*;
-import org.springframework.security.authentication.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
 @AllArgsConstructor
 public class SecurityController {
-  private final UserRepository userRepository;
-  private final PasswordEncoder passwordEncoder;
-  private final AuthenticationManager authenticationManager;
-  private final JwtTokenProvider jwtTokenProvider;
+  private final AuthService authService;
 
   @PostMapping("/signup")
-  public ResponseEntity<String> signup(@RequestBody SignupRequest signupDto) {
-    if (userRepository.existsUserByUsername(signupDto.getUsername())) {
-      return ResponseEntity.badRequest().body("Username already taken");
-    }
-
-    if (userRepository.existsUserByEmail(signupDto.getEmail())) {
-      return ResponseEntity.badRequest().body("Email already registered");
-    }
-
-    User user = new User();
-    user.setUsername(signupDto.getUsername());
-    user.setEmail(signupDto.getEmail());
-    user.setPassword(passwordEncoder.encode(signupDto.getPassword()));
-    userRepository.save(user);
-
-    return ResponseEntity.ok("Signup successful");
+  public ResponseEntity<ApiResponse<UserResponse>> signup(@RequestBody SignupRequest request) {
+    UserResponse user = authService.signup(request);
+    return ResponseEntity.ok(new ApiResponse<>("Signup successful", user));
   }
 
   @PostMapping("/signin")
-  public ResponseEntity<?> signin(@RequestBody SigninRequest signinDto) {
-    try {
-      Authentication authentication = authenticationManager.authenticate(
-          new UsernamePasswordAuthenticationToken(
-              signinDto.getUsername(), signinDto.getPassword())
-      );
-
-      SecurityContextHolder.getContext().setAuthentication(authentication);
-      String jwt = jwtTokenProvider.generateToken(authentication);
-
-      return ResponseEntity.ok(jwt);
-    } catch (BadCredentialsException | NoSuchAlgorithmException e) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-    }
+  public ResponseEntity<ApiResponse<AuthResponse>> signin(@RequestBody SigninRequest request) {
+    AuthResponse response = authService.signin(request);
+    return ResponseEntity.ok(new ApiResponse<>("Signin successful", response));
   }
 }
