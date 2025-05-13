@@ -31,21 +31,26 @@ public class ChatController {
   }
 
   @GetMapping("/chats/{chatId}")
-  public ResponseEntity<ApiResponse<ChatResponse>> getChatById(@PathVariable Long chatId,
-                                                               Principal principal) {
+  public ResponseEntity<ApiResponse<ChatResponse>> getChatById(
+      @PathVariable Long chatId,
+      Principal principal) {
     ChatResponse chat = chatService.getChatById(chatId, principal);
     return ResponseEntity.ok(new ApiResponse<>("Chat retrieved successfully", chat));
   }
 
   // TODO: Добавить @Valid
   @PostMapping("/chats/create")
-  public ResponseEntity<ApiResponse<ChatResponse>> createChat(@RequestBody CreateChatRequest request, Principal principal) {
+  public ResponseEntity<ApiResponse<ChatResponse>> createChat(
+      @RequestBody CreateChatRequest request,
+      Principal principal) {
     ChatResponse response = chatService.createChat(request, principal);
     return ResponseEntity.ok(new ApiResponse<>("Chat created successfully", response));
   }
 
   @DeleteMapping("/chats/{chatId}/destroy")
-  public ResponseEntity<ApiResponse<Void>> deleteChat(@PathVariable Long chatId, Principal principal) {
+  public ResponseEntity<ApiResponse<Void>> deleteChat(
+      @PathVariable Long chatId,
+      Principal principal) {
     chatService.deleteChat(chatId, principal);
     return ResponseEntity.ok(new ApiResponse<>("Chat deleted successfully", null));
   }
