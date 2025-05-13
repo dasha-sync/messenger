@@ -35,7 +35,7 @@ public class ChatController {
     User currentUser = getCurrentUser(principal);
     var chats = chatMemberRepository.findChatsByUserId(currentUser.getId())
         .stream()
-        .map(chat -> new ChatDto(chat.getId(), chat.getName(currentUser)))
+        .map(chat -> new ChatResponse(chat.getId(), chat.getName(currentUser)))
         .toList();
 
     return ResponseEntity.ok(Map.of(
@@ -57,8 +57,8 @@ public class ChatController {
         .findFirst()
         .orElseThrow(() -> new RuntimeException("Chat not found"));
 
-    ChatDto chatDto = new ChatDto(chat.getId(), chat.getName(currentUser));
-    return ResponseEntity.ok(chatDto);
+    ChatResponse chatResponse = new ChatResponse(chat.getId(), chat.getName(currentUser));
+    return ResponseEntity.ok(chatResponse);
   }
 
   @PostMapping("/chats/create")

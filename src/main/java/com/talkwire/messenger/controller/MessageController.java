@@ -27,13 +27,13 @@ public class MessageController {
   private final UserRepository userRepository;
 
   @GetMapping("{chatId}/messages")
-  public ResponseEntity<List<MessageDto>> getMessages(
+  public ResponseEntity<List<MessageResponse>> getMessages(
       @PathVariable Long chatId, Principal principal) {
     User currentUser = getCurrentUser(principal);
     validateChatMembership(currentUser.getId(), chatId);
 
-    List<MessageDto> messages = messageRepository.findByChatId(chatId).stream()
-        .map(message -> new MessageDto(
+    List<MessageResponse> messages = messageRepository.findByChatId(chatId).stream()
+        .map(message -> new MessageResponse(
             message.getId(),
             message.getText(),
             message.getCreatedAt(),

@@ -4,7 +4,7 @@ import lombok.*;
 
 @Data
 @AllArgsConstructor
-public class ChatDto {
+public class ChatResponse {
   private Long id;
   private String name;
 }
