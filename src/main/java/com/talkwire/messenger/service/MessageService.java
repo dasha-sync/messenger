@@ -1,8 +1,7 @@
 package com.talkwire.messenger.service;
 
-import static org.springframework.http.HttpStatus.*;
-
 import com.talkwire.messenger.dto.message.*;
+import com.talkwire.messenger.exception.*;
 import com.talkwire.messenger.model.*;
 import com.talkwire.messenger.repository.*;
 import jakarta.transaction.Transactional;
@@ -11,7 +10,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -35,9 +33,8 @@ public class MessageService {
     User currentUser = userService.getCurrentUser(principal);
     validateChatAccess(currentUser.getId(), chatId);
 
-    // TODO: ChatNotFoundException("Chat not found"));
     Chat chat = chatRepository.findById(chatId)
-        .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Chat not found"));
+        .orElseThrow(() -> new ChatNotFoundException("Chat not found"));
 
     Message message = new Message();
     message.setChat(chat);
@@ -57,9 +54,8 @@ public class MessageService {
     User currentUser = userService.getCurrentUser(principal);
     validateChatAccess(currentUser.getId(), chatId);
 
-    // TODO: MessageNotFoundException("Message not found"));
     Message message = messageRepository.findById(messageId)
-        .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Message not found"));
+        .orElseThrow(() -> new MessageNotFoundException("Message not found"));
 
     validateMessageOwnership(currentUser, message);
 
@@ -74,26 +70,23 @@ public class MessageService {
     User currentUser = userService.getCurrentUser(principal);
     validateChatAccess(currentUser.getId(), chatId);
 
-    // TODO: MessageNotFoundException("Message not found"));
     Message message = messageRepository.findById(messageId)
-        .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Message not found"));
+        .orElseThrow(() -> new MessageNotFoundException("Message not found"));
 
     validateMessageOwnership(currentUser, message);
 
     messageRepository.delete(message);
   }
 
-  // TODO: ChatAccessDeniedException("Access denied: not a member of this chat");
   private void validateChatAccess(Long userId, Long chatId) {
     if (!chatMemberRepository.existsByUserIdAndChatId(userId, chatId)) {
-      throw new ResponseStatusException(FORBIDDEN, "Access denied: not a member of this chat");
+      throw new ChatAccessDeniedException("Access denied: not a member of this chat");
     }
   }
 
-  // TODO: MessageOperationException("Access denied: cannot modify others' messages");
   private void validateMessageOwnership(User user, Message message) {
     if (!message.getUser().getId().equals(user.getId())) {
-      throw new ResponseStatusException(FORBIDDEN, "Access denied: cannot modify others' messages");
+      throw new MessageOperationException("Access denied: cannot modify others' messages");
     }
   }
 

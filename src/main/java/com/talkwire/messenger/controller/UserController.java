@@ -31,14 +31,8 @@ public class UserController {
       @PathVariable Long userId,
       @RequestBody UpdateUserRequest request,
       Principal principal) {
-    try {
-      AuthResponse response = userService.updateUser(userId, request, principal);
-      return ResponseEntity.ok(new ApiResponse<>("User updated successfully", response));
-      // TODO: UserNotFoundException | UserUpdateException
-    } catch (Exception e) {
-      return ResponseEntity.status(FORBIDDEN)
-          .body(new ApiResponse<>(e.getMessage(), null));
-    }
+    AuthResponse response = userService.updateUser(userId, request, principal);
+    return ResponseEntity.ok(new ApiResponse<>("User updated successfully", response));
   }
 
   @DeleteMapping("{userId}/destroy")
