@@ -5,7 +5,7 @@ import lombok.*;
 
 @Data
 @AllArgsConstructor
-public class MessageDto {
+public class MessageResponse {
   private Long id;
   private String text;
   private LocalDateTime createdAt;
