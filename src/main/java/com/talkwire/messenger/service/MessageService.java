@@ -1,7 +1,8 @@
 package com.talkwire.messenger.service;
 
 import com.talkwire.messenger.dto.message.*;
-import com.talkwire.messenger.exception.*;
+import com.talkwire.messenger.exception.chat.*;
+import com.talkwire.messenger.exception.message.*;
 import com.talkwire.messenger.model.*;
 import com.talkwire.messenger.repository.*;
 import jakarta.transaction.Transactional;

@@ -2,13 +2,10 @@ package com.talkwire.messenger.service;
 
 import com.talkwire.messenger.dto.contact.ContactResponse;
 import com.talkwire.messenger.dto.request.RequestResponse;
-import com.talkwire.messenger.exception.UserNotFoundException;
-import com.talkwire.messenger.model.Contact;
-import com.talkwire.messenger.model.Request;
-import com.talkwire.messenger.model.User;
-import com.talkwire.messenger.repository.ContactRepository;
-import com.talkwire.messenger.repository.RequestRepository;
-import com.talkwire.messenger.repository.UserRepository;
+import com.talkwire.messenger.exception.request.*;
+import com.talkwire.messenger.exception.user.UserNotFoundException;
+import com.talkwire.messenger.model.*;
+import com.talkwire.messenger.repository.*;
 import java.security.Principal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -41,9 +38,8 @@ public class RequestService {
 
   public RequestResponse getRequestById(Long requestId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
-    // TODO: RequestNotFoundException
     Request request = requestRepository.findById(requestId)
-        .orElseThrow(() -> new RuntimeException("Request not found"));
+        .orElseThrow(() -> new RequestNotFoundException("Request not found"));
 
     validateUserRequestAccess(request, currentUser.getId());
     return mapToRequestDto(request);
@@ -54,19 +50,16 @@ public class RequestService {
     User contactUser = userRepository.findById(userId)
         .orElseThrow(() -> new UserNotFoundException("Contact user not found"));
 
-    // TODO: RequestOperationException
     if (currentUser.getId().equals(contactUser.getId())) {
-      throw new RuntimeException("You can not create request to yourself");
+      throw new RequestOperationException("You can not create request to yourself");
     }
 
-    // TODO: RequestOperationException
     if (contactRepository.existsByUserIdAndContactId(currentUser.getId(), contactUser.getId())) {
-      throw new RuntimeException("Contact already exists");
+      throw new RequestOperationException("Contact already exists");
     }
 
-    // TODO: RequestOperationException
     if (contactRepository.existsByUserIdAndContactId(currentUser.getId(), contactUser.getId())) {
-      throw new RuntimeException("Request already exists");
+      throw new RequestOperationException("Request already exists");
     }
 
     Request request = new Request();
@@ -78,9 +71,8 @@ public class RequestService {
 
   public void deleteUserRequest(Long requestId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
-    // TODO: RequestNotFoundException
     Request request = requestRepository.findById(requestId)
-        .orElseThrow(() -> new RuntimeException("Request not found"));
+        .orElseThrow(() -> new RequestNotFoundException("Request not found"));
 
     validateUserRequestAccess(request, currentUser.getId());
     requestRepository.delete(request);
@@ -88,9 +80,8 @@ public class RequestService {
 
   public ContactResponse approveRequest(Long requestId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
-    // TODO: RequestNotFoundException
     Request request = requestRepository.findById(requestId)
-        .orElseThrow(() -> new RuntimeException("Request not found"));
+        .orElseThrow(() -> new RequestNotFoundException("Request not found"));
 
     validateRequestAccess(request, currentUser.getId());
 
@@ -104,25 +95,22 @@ public class RequestService {
 
   public void deleteRequest(Long requestId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
-    // TODO: RequestNotFoundException
     Request request = requestRepository.findById(requestId)
-        .orElseThrow(() -> new RuntimeException("Request not found"));
+        .orElseThrow(() -> new RequestNotFoundException("Request not found"));
 
     validateRequestAccess(request, currentUser.getId());
     requestRepository.delete(request);
   }
 
-  // TODO: RequestAccessDeniedException
   private void validateUserRequestAccess(Request request, Long userId) {
     if (!request.getUser().getId().equals(userId)) {
-      throw new RuntimeException("Access denied: It is not your user request");
+      throw new RequestAccessDeniedException("Access denied: It is not your user request");
     }
   }
 
-  // TODO: RequestAccessDeniedException
   private void validateRequestAccess(Request request, Long userId) {
     if (!request.getContact().getId().equals(userId)) {
-      throw new RuntimeException("Access denied: It is not your request");
+      throw new RequestAccessDeniedException("Access denied: It is not your request");
     }
   }
 

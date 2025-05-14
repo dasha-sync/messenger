@@ -1,8 +1,8 @@
 package com.talkwire.messenger.service;
 
 import com.talkwire.messenger.dto.contact.ContactResponse;
-import com.talkwire.messenger.model.Contact;
-import com.talkwire.messenger.model.User;
+import com.talkwire.messenger.exception.contact.*;
+import com.talkwire.messenger.model.*;
 import com.talkwire.messenger.repository.ContactRepository;
 import java.security.Principal;
 import java.util.List;
@@ -25,9 +25,8 @@ public class ContactService {
 
   public void deleteContact(Long contactId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
-    // TODO: ContactNotFoundException
     Contact contact = contactRepository.findById(contactId)
-        .orElseThrow(() -> new RuntimeException("Contact not found"));
+        .orElseThrow(() -> new ContactNotFoundException("Contact not found"));
 
     validateContactAccess(contact, currentUser.getId());
     contactRepository.delete(contact);
@@ -42,10 +41,9 @@ public class ContactService {
         contact.getContact().getUsername());
   }
 
-  // TODO: ContactAccessDeniedException
   private void validateContactAccess(Contact contact, Long userId) {
     if (!contact.getUser().getId().equals(userId)) {
-      throw new RuntimeException("Access denied: It is not your request");
+      throw new ContactAccessDeniedException("Access denied: It is not your request");
     }
   }
 }
