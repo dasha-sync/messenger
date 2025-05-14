@@ -1,25 +1,16 @@
 package com.talkwire.messenger.exception;
 
 import com.talkwire.messenger.dto.exception.ErrorResponse;
-import com.talkwire.messenger.exception.chat.ChatAccessDeniedException;
-import com.talkwire.messenger.exception.chat.ChatNotFoundException;
-import com.talkwire.messenger.exception.chat.ChatOperationException;
-import com.talkwire.messenger.exception.contact.ContactAccessDeniedException;
-import com.talkwire.messenger.exception.contact.ContactNotFoundException;
-import com.talkwire.messenger.exception.message.MessageNotFoundException;
-import com.talkwire.messenger.exception.message.MessageOperationException;
-import com.talkwire.messenger.exception.request.RequestAccessDeniedException;
-import com.talkwire.messenger.exception.request.RequestNotFoundException;
-import com.talkwire.messenger.exception.request.RequestOperationException;
-import com.talkwire.messenger.exception.user.UserAlreadyExistsException;
-import com.talkwire.messenger.exception.user.UserDeleteException;
-import com.talkwire.messenger.exception.user.UserNotFoundException;
-import com.talkwire.messenger.exception.user.UserUpdateException;
+import com.talkwire.messenger.exception.chat.*;
+import com.talkwire.messenger.exception.contact.*;
+import com.talkwire.messenger.exception.message.*;
+import com.talkwire.messenger.exception.request.*;
+import com.talkwire.messenger.exception.user.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.util.NoSuchElementException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import java.util.*;
+import org.springframework.http.*;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -164,6 +155,23 @@ public class GlobalExceptionHandler {
       HttpServletRequest request
   ) {
     return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<Map<String, Object>> handleValidationException(MethodArgumentNotValidException ex) {
+    Map<String, String> errors = new LinkedHashMap<>();
+
+    ex.getBindingResult().getFieldErrors().forEach(error ->
+        errors.put(error.getField(), error.getDefaultMessage())
+    );
+
+    Map<String, Object> response = new LinkedHashMap<>();
+    response.put("status", HttpStatus.BAD_REQUEST.value());
+    response.put("error", "Validation failed");
+    response.put("timestamp", new Date());
+    response.put("errors", errors);
+
+    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
   }
 
   private ResponseEntity<ErrorResponse> buildErrorResponse(

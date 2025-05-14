@@ -3,6 +3,7 @@ package com.talkwire.messenger.controller;
 import com.talkwire.messenger.dto.common.ApiResponse;
 import com.talkwire.messenger.dto.message.*;
 import com.talkwire.messenger.service.MessageService;
+import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class MessageController {
   @PostMapping("{chatId}/messages/create")
   public ResponseEntity<ApiResponse<MessageResponse>> createMessage(
       @PathVariable Long chatId,
-      @RequestBody CreateMessageRequest request,
+      @Valid @RequestBody CreateMessageRequest request,
       Principal principal) {
     MessageResponse message = messageService.createMessage(chatId, request, principal);
     return ResponseEntity.ok(new ApiResponse<>("Message created successfully", message));
@@ -38,7 +39,7 @@ public class MessageController {
   public ResponseEntity<ApiResponse<MessageResponse>> updateMessage(
       @PathVariable Long chatId,
       @PathVariable Long messageId,
-      @RequestBody UpdateMessageRequest request,
+      @Valid @RequestBody UpdateMessageRequest request,
       Principal principal) {
 
     MessageResponse message = messageService.updateMessage(chatId, messageId, request, principal);

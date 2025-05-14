@@ -1,10 +1,9 @@
 package com.talkwire.messenger.controller;
 
-import static org.springframework.http.HttpStatus.*;
-
 import com.talkwire.messenger.dto.common.ApiResponse;
 import com.talkwire.messenger.dto.user.*;
 import com.talkwire.messenger.service.UserService;
+import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +34,7 @@ public class UserController {
   @PatchMapping("/{userId}/update")
   public ResponseEntity<ApiResponse<AuthResponse>> updateUser(
       @PathVariable Long userId,
-      @RequestBody UpdateUserRequest request,
+      @Valid @RequestBody UpdateUserRequest request,
       Principal principal) {
     AuthResponse response = userService.updateUser(userId, request, principal);
     return ResponseEntity.ok(new ApiResponse<>("User updated successfully", response));
@@ -44,7 +43,7 @@ public class UserController {
   @DeleteMapping("/{userId}/destroy")
   public ResponseEntity<ApiResponse<Void>> deleteUser(
       @PathVariable Long userId,
-      @RequestBody DeleteUserRequest request,
+      @Valid @RequestBody DeleteUserRequest request,
       Principal principal) {
     userService.deleteUser(userId, request, principal);
     return ResponseEntity.ok(new ApiResponse<>("User deleted successfully", null));
