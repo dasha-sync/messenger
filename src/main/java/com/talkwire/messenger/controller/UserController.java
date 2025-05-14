@@ -26,7 +26,13 @@ public class UserController {
     return ResponseEntity.ok(new ApiResponse<>("Users retrieved successfully", users));
   }
 
-  @PatchMapping("{userId}/update")
+  @GetMapping("/{userId}")
+  public ResponseEntity<ApiResponse<UserResponse>> getNonCurrentUser(@PathVariable Long userId) {
+    UserResponse user = userService.getNonCurrentUser(userId);
+    return ResponseEntity.ok(new ApiResponse<>("User retrieved successfully", user));
+  }
+
+  @PatchMapping("/{userId}/update")
   public ResponseEntity<ApiResponse<AuthResponse>> updateUser(
       @PathVariable Long userId,
       @RequestBody UpdateUserRequest request,
@@ -35,7 +41,7 @@ public class UserController {
     return ResponseEntity.ok(new ApiResponse<>("User updated successfully", response));
   }
 
-  @DeleteMapping("{userId}/destroy")
+  @DeleteMapping("/{userId}/destroy")
   public ResponseEntity<ApiResponse<Void>> deleteUser(
       @PathVariable Long userId,
       @RequestBody DeleteUserRequest request,
