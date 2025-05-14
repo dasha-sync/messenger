@@ -59,6 +59,16 @@ public class RequestService {
       throw new RuntimeException("You can not create request to yourself");
     }
 
+    // TODO: RequestOperationException
+    if (contactRepository.existsByUserIdAndContactId(currentUser.getId(), contactUser.getId())) {
+      throw new RuntimeException("Contact already exists");
+    }
+
+    // TODO: RequestOperationException
+    if (contactRepository.existsByUserIdAndContactId(currentUser.getId(), contactUser.getId())) {
+      throw new RuntimeException("Request already exists");
+    }
+
     Request request = new Request();
     request.setUser(currentUser);
     request.setContact(contactUser);
