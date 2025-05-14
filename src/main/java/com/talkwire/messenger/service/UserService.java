@@ -36,6 +36,13 @@ public class UserService {
         .toList();
   }
 
+  public UserResponse getNonCurrentUser(Long userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+    return mapToUserDto(user);
+  }
+
   public AuthResponse updateUser(Long userId, UpdateUserRequest request, Principal principal) {
     User currentUser = getCurrentUser(principal);
     validateUserAccess(userId, currentUser);
