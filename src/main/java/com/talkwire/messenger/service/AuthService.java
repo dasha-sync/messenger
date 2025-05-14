@@ -1,7 +1,7 @@
 package com.talkwire.messenger.service;
 
 import com.talkwire.messenger.dto.user.*;
-import com.talkwire.messenger.exception.UserAlreadyExistsException;
+import com.talkwire.messenger.exception.user.UserAlreadyExistsException;
 import com.talkwire.messenger.model.User;
 import com.talkwire.messenger.repository.UserRepository;
 import com.talkwire.messenger.security.JwtTokenProvider;
