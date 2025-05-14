@@ -1,10 +1,11 @@
-package com.talkwire.messenger.dto.request;
+package com.talkwire.messenger.dto.contact;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class RequestResponse {
+public class ContactResponse {
   private Long id;
   private Long from;
   private String fromUsername;

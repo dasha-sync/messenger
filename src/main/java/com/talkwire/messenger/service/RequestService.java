@@ -1,9 +1,12 @@
 package com.talkwire.messenger.service;
 
+import com.talkwire.messenger.dto.contact.ContactResponse;
 import com.talkwire.messenger.dto.request.RequestResponse;
 import com.talkwire.messenger.exception.UserNotFoundException;
+import com.talkwire.messenger.model.Contact;
 import com.talkwire.messenger.model.Request;
 import com.talkwire.messenger.model.User;
+import com.talkwire.messenger.repository.ContactRepository;
 import com.talkwire.messenger.repository.RequestRepository;
 import com.talkwire.messenger.repository.UserRepository;
 import java.security.Principal;
@@ -17,10 +20,20 @@ public class RequestService {
   private final UserService userService;
   private final RequestRepository requestRepository;
   private final UserRepository userRepository;
+  private final ContactRepository contactRepository;
+  private final ContactService contactService;
 
   public List<RequestResponse> getUserRequests(Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
     return requestRepository.findAllByUserId(currentUser.getId())
+        .stream()
+        .map(this::mapToRequestDto)
+        .toList();
+  }
+
+  public List<RequestResponse> getRequests(Principal principal) {
+    User currentUser = userService.getCurrentUser(principal);
+    return requestRepository.findAllByContactId(currentUser.getId())
         .stream()
         .map(this::mapToRequestDto)
         .toList();
@@ -32,7 +45,7 @@ public class RequestService {
     Request request = requestRepository.findById(requestId)
         .orElseThrow(() -> new RuntimeException("Request not found"));
 
-    validateRequestAccess(request, currentUser.getId());
+    validateUserRequestAccess(request, currentUser.getId());
     return mapToRequestDto(request);
   }
 
@@ -53,6 +66,32 @@ public class RequestService {
     return mapToRequestDto(request);
   }
 
+  public void deleteUserRequest(Long requestId, Principal principal) {
+    User currentUser = userService.getCurrentUser(principal);
+    // TODO: RequestNotFoundException
+    Request request = requestRepository.findById(requestId)
+        .orElseThrow(() -> new RuntimeException("Request not found"));
+
+    validateUserRequestAccess(request, currentUser.getId());
+    requestRepository.delete(request);
+  }
+
+  public ContactResponse approveRequest(Long requestId, Principal principal) {
+    User currentUser = userService.getCurrentUser(principal);
+    // TODO: RequestNotFoundException
+    Request request = requestRepository.findById(requestId)
+        .orElseThrow(() -> new RuntimeException("Request not found"));
+
+    validateRequestAccess(request, currentUser.getId());
+
+    Contact contact = new Contact();
+    contact.setUser(request.getUser());
+    contact.setContact(request.getContact());
+    contactRepository.save(contact);
+
+    return contactService.mapToContactDto(contact);
+  }
+
   public void deleteRequest(Long requestId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
     // TODO: RequestNotFoundException
@@ -64,8 +103,15 @@ public class RequestService {
   }
 
   // TODO: RequestAccessDeniedException
-  private void validateRequestAccess(Request request, Long userId) {
+  private void validateUserRequestAccess(Request request, Long userId) {
     if (!request.getUser().getId().equals(userId)) {
+      throw new RuntimeException("Access denied: It is not your user request");
+    }
+  }
+
+  // TODO: RequestAccessDeniedException
+  private void validateRequestAccess(Request request, Long userId) {
+    if (!request.getContact().getId().equals(userId)) {
       throw new RuntimeException("Access denied: It is not your request");
     }
   }
@@ -74,6 +120,7 @@ public class RequestService {
     return new RequestResponse(
         request.getId(),
         request.getUser().getId(),
+        request.getUser().getUsername(),
         request.getContact().getId(),
         request.getContact().getUsername());
   }
