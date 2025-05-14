@@ -19,7 +19,7 @@ CREATE TABLE chat_members (
     UNIQUE (user_id, chat_id)
 )
 
-CREATE TABLE user_contacts (
+CREATE TABLE contacts (
     id serial PRIMARY KEY,
     user_id BIGINT NOT NULL,
     contact_id BIGINT NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE messages (
     FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
 )
 
-CREATE TABLE contact_requests (
+CREATE TABLE requests (
     id serial PRIMARY KEY,
     user_id BIGINT NOT NULL,
     contact_id BIGINT NOT NULL,
