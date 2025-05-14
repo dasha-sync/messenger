@@ -3,6 +3,7 @@ package com.talkwire.messenger.controller;
 import com.talkwire.messenger.dto.chat.*;
 import com.talkwire.messenger.dto.common.ApiResponse;
 import com.talkwire.messenger.service.ChatService;
+import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,6 @@ import org.springframework.messaging.handler.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-// TODO: Добавить Валидации - везде
 @RestController
 @RequestMapping("/secured")
 @PreAuthorize("isAuthenticated()")
@@ -41,7 +41,7 @@ public class ChatController {
 
   @PostMapping("/chats/create")
   public ResponseEntity<ApiResponse<ChatResponse>> createChat(
-      @RequestBody CreateChatRequest request,
+      @Valid @RequestBody CreateChatRequest request,
       Principal principal) {
     ChatResponse response = chatService.createChat(request, principal);
     return ResponseEntity.ok(new ApiResponse<>("Chat created successfully", response));
