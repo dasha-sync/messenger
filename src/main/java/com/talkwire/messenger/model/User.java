@@ -30,6 +30,9 @@ public class User {
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<UserContact> contacts = new ArrayList<>();
 
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<ContactRequest> contactRequests = new ArrayList<>();
+
   public void addChatMembers(ChatMember chatMember) {
     chatMembers.add(chatMember);
     chatMember.setUser(this);
@@ -43,5 +46,10 @@ public class User {
   public void addContacts(UserContact contact) {
     contacts.add(contact);
     contact.setUser(this);
+  }
+
+  public void addRequest(ContactRequest request) {
+    contactRequests.add(request);
+    request.setUser(this);
   }
 }

@@ -38,3 +38,12 @@ CREATE TABLE messages (
     FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
 )
 
+CREATE TABLE contact_requests (
+    id serial PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    contact_id BIGINT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (contact_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (user_id, contact_id)
+)
+
