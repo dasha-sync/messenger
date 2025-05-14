@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ContactRepository extends JpaRepository<Contact, Long> {
   List<Contact> findAllByUserId(Long userId);
+
+  boolean existsByUserIdAndContactId(Long userId, Long contactId);
 }
