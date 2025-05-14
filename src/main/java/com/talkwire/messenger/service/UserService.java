@@ -1,13 +1,12 @@
 package com.talkwire.messenger.service;
 
 import com.talkwire.messenger.dto.user.*;
-import com.talkwire.messenger.exception.*;
+import com.talkwire.messenger.exception.user.*;
 import com.talkwire.messenger.model.User;
 import com.talkwire.messenger.repository.UserRepository;
 import com.talkwire.messenger.security.*;
 import jakarta.transaction.Transactional;
-import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
+import java.security.*;
 import java.util.List;
 import lombok.*;
 import org.springframework.security.authentication.*;
