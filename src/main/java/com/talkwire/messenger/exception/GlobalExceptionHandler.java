@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 
-@RestControllerAdvice
+@ControllerAdvice
 public class GlobalExceptionHandler {
 
   @ExceptionHandler(ResponseStatusException.class)
@@ -34,8 +34,13 @@ public class GlobalExceptionHandler {
       Exception ex,
       HttpServletRequest request
   ) {
+    String uri = request.getRequestURI();
+    if (uri.startsWith("/v3/api-docs") || uri.startsWith("/swagger-ui")) {
+      throw new RuntimeException(ex);
+    }
     return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request);
   }
+
 
   @ExceptionHandler(ChatAccessDeniedException.class)
   public ResponseEntity<ErrorResponse> handleForbiddenException(
