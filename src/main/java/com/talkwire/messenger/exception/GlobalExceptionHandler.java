@@ -158,7 +158,8 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<Map<String, Object>> handleValidationException(MethodArgumentNotValidException ex) {
+  public ResponseEntity<Map<String, Object>> handleValidationException(
+      MethodArgumentNotValidException ex) {
     Map<String, String> errors = new LinkedHashMap<>();
 
     ex.getBindingResult().getFieldErrors().forEach(error ->
