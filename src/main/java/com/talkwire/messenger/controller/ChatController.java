@@ -21,12 +21,6 @@ public class ChatController {
   private final ChatService chatService;
   private final SimpMessagingTemplate messagingTemplate;
 
-  @MessageMapping("/chat")
-  @SendTo("/topic/messages")
-  public Map<String, String> processMessageFromClient(String message) {
-    return Map.of("response", chatService.answerMessage(message));
-  }
-
   @GetMapping("/chats")
   public ResponseEntity<ApiResponse<ChatListResponse>> getUserChats(Principal principal) {
     ChatListResponse response = chatService.getUserChats(principal);
