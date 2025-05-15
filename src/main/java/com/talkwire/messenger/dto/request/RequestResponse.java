@@ -10,4 +10,5 @@ public class RequestResponse {
   private String fromUsername;
   private Long to;
   private String toUsername;
+  private String action;
 }

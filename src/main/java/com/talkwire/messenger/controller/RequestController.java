@@ -1,7 +1,6 @@
 package com.talkwire.messenger.controller;
 
 import com.talkwire.messenger.dto.common.ApiResponse;
-import com.talkwire.messenger.dto.contact.ContactResponse;
 import com.talkwire.messenger.dto.request.RequestResponse;
 import com.talkwire.messenger.service.RequestService;
 import jakarta.transaction.Transactional;
@@ -9,6 +8,8 @@ import java.security.Principal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class RequestController {
   private final RequestService requestService;
+  private final SimpMessagingTemplate messagingTemplate;
 
   // requests которые юзер сам отправил
   @GetMapping("/user_requests")
@@ -42,37 +44,45 @@ public class RequestController {
   }
 
   @PostMapping("/users/{userId}/requests/create")
-  public ResponseEntity<ApiResponse<RequestResponse>> createRequest(
+  @SendTo("/topic/requests")
+  public ResponseEntity<RequestResponse> createRequest(
       @PathVariable Long userId,
       Principal principal) {
     RequestResponse response = requestService.createRequest(userId, principal);
-    return ResponseEntity.ok(new ApiResponse<>("Request created successfully", response));
+
+    return ResponseEntity.ok(response);
   }
 
   @DeleteMapping("/requests/{requestId}/destroy")
-  public ResponseEntity<ApiResponse<Void>> deleteUserRequest(
+  @SendTo("/topic/requests")
+  public ResponseEntity<RequestResponse> deleteUserRequest(
       @PathVariable Long requestId,
       Principal principal) {
-    requestService.deleteUserRequest(requestId, principal);
-    return ResponseEntity.ok(new ApiResponse<>("Request deleted successfully", null));
+    RequestResponse response = requestService.deleteUserRequest(requestId, principal);
+
+    return ResponseEntity.ok(response);
   }
 
   @PostMapping("/requests/{requestId}/approve")
+  @SendTo("/topic/requests")
   @Transactional
-  public ResponseEntity<ApiResponse<ContactResponse>> approveRequest(
+  public ResponseEntity<RequestResponse> approveRequest(
       @PathVariable Long requestId,
       Principal principal) {
-    ContactResponse response = requestService.approveRequest(requestId, principal);
+    RequestResponse response = requestService.approveRequest(requestId, principal);
     requestService.deleteRequest(requestId, principal);
-    return ResponseEntity.ok(new ApiResponse<>("Request approved", response));
+
+    return ResponseEntity.ok(response);
   }
 
   @PostMapping("/requests/{requestId}/reject")
+  @SendTo("/topic/requests")
   @Transactional
-  public ResponseEntity<ApiResponse<Void>> rejectRequest(
+  public ResponseEntity<RequestResponse> rejectRequest(
       @PathVariable Long requestId,
       Principal principal) {
-    requestService.deleteRequest(requestId, principal);
-    return ResponseEntity.ok(new ApiResponse<>("Request rejected", null));
+    RequestResponse response = requestService.deleteRequest(requestId, principal);
+
+    return ResponseEntity.ok(response);
   }
 }

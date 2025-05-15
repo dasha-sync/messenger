@@ -1,5 +1,6 @@
 package com.talkwire.messenger.service;
 
+import com.talkwire.messenger.dto.chat.ChatResponse;
 import com.talkwire.messenger.dto.message.*;
 import com.talkwire.messenger.exception.chat.*;
 import com.talkwire.messenger.exception.message.*;
@@ -25,7 +26,7 @@ public class MessageService {
     validateChatAccess(currentUser.getId(), chatId);
 
     return messageRepository.findByChatId(chatId).stream()
-        .map(this::mapToMessageDto)
+        .map(message -> mapToMessageDto(message, "GET"))
         .toList();
   }
 
@@ -44,7 +45,7 @@ public class MessageService {
     message.setCreatedAt(LocalDateTime.now());
 
     messageRepository.save(message);
-    return mapToMessageDto(message);
+    return mapToMessageDto(message, "CREATE");
   }
 
   public MessageResponse updateMessage(
@@ -63,20 +64,20 @@ public class MessageService {
     message.setText(request.getNewContent());
     messageRepository.save(message);
 
-    return mapToMessageDto(message);
+    return mapToMessageDto(message, "UPDATE");
   }
 
   @Transactional
-  public void deleteMessage(Long chatId, Long messageId, Principal principal) {
+  public MessageResponse deleteMessage(Long chatId, Long messageId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
-    validateChatAccess(currentUser.getId(), chatId);
-
     Message message = messageRepository.findById(messageId)
         .orElseThrow(() -> new MessageNotFoundException("Message not found"));
 
+    validateChatAccess(currentUser.getId(), chatId);
     validateMessageOwnership(currentUser, message);
-
     messageRepository.delete(message);
+
+    return mapToMessageDto(message, "DELETE");
   }
 
   private void validateChatAccess(Long userId, Long chatId) {
@@ -91,14 +92,15 @@ public class MessageService {
     }
   }
 
-  private MessageResponse mapToMessageDto(Message message) {
+  private MessageResponse mapToMessageDto(Message message, String action) {
     return new MessageResponse(
         message.getId(),
         message.getText(),
         message.getCreatedAt(),
         message.getUser().getId(),
         message.getUser().getUsername(),
-        message.getChat().getId()
+        message.getChat().getId(),
+        action
     );
   }
 }

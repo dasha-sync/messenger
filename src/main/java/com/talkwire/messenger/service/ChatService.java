@@ -21,22 +21,11 @@ public class ChatService {
   private final UserRepository userRepository;
   private final UserService userService;
 
-  // TODO: Websockets
-  public String answerMessage(String data) {
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < data.length(); i++) {
-      String characters = "qwertyuiopasdfghjklzxcvbnm1234567890";
-      int index = ThreadLocalRandom.current().nextInt(characters.length());
-      result.append(characters.charAt(index));
-    }
-    return result.toString();
-  }
-
   public ChatListResponse getUserChats(Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
     List<ChatResponse> chats = chatMemberRepository.findChatsByUserId(currentUser.getId())
         .stream()
-        .map(chat -> new ChatResponse(chat.getId(), chat.getName(currentUser)))
+        .map(chat -> mapToChatDto(chat, "GET"))
         .toList();
 
     return new ChatListResponse(currentUser.getUsername(), chats);
@@ -50,9 +39,9 @@ public class ChatService {
         .stream()
         .filter(c -> c.getId().equals(chatId))
         .findFirst()
-        .orElseThrow(() -> new RuntimeException("Chat not found"));
+        .orElseThrow(() -> new ChatNotFoundException("Chat not found"));
 
-    return new ChatResponse(chat.getId(), chat.getName(currentUser));
+    return mapToChatDto(chat, "GET");
   }
 
   @Transactional
@@ -60,13 +49,12 @@ public class ChatService {
     User currentUser = userService.getCurrentUser(principal);
     User targetUser = userRepository.findUserByUsername(request.getUsername())
         .orElseThrow(() -> new UserNotFoundException("Target user not found"));
+    List<Chat> existingChats = chatMemberRepository
+        .findChatsByTwoUsers(currentUser.getId(), targetUser.getId());
 
     if (currentUser.getId().equals(targetUser.getId())) {
       throw new ChatOperationException("Chat with yourself feature in develop");
     }
-
-    List<Chat> existingChats = chatMemberRepository
-        .findChatsByTwoUsers(currentUser.getId(), targetUser.getId());
 
     if (!existingChats.isEmpty()) {
       throw new ChatOperationException("Chat already exists between these users");
@@ -81,19 +69,22 @@ public class ChatService {
       throw new ChatOperationException("Chat members not created");
     }
 
-    return new ChatResponse(chat.getId(), chat.getName(currentUser));
+    return mapToChatDto(chat, "CREATE");
   }
 
   @Transactional
-  public void deleteChat(Long chatId, Principal principal) {
+  public ChatResponse deleteChat(Long chatId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
+    Chat chat = chatRepository.findById(chatId)
+        .orElseThrow(() -> new  ChatNotFoundException("Chat not found"));
     validateChatAccess(currentUser.getId(), chatId);
-
-    chatRepository.deleteById(chatId);
+    chatRepository.delete(chat);
 
     if (chatRepository.existsById(chatId)) {
       throw new ChatOperationException("Failed to delete chat");
     }
+
+    return mapToChatDto(chat, "DELETE");
   }
 
   private void createChatMember(Chat chat, User user) {
@@ -107,5 +98,9 @@ public class ChatService {
     if (!chatMemberRepository.existsByUserIdAndChatId(userId, chatId)) {
       throw new ChatAccessDeniedException("Access denied: You are not a member of this chat");
     }
+  }
+
+  private ChatResponse mapToChatDto(Chat chat, String action) {
+    return new ChatResponse(chat.getId(), chat.getName(), action);
   }
 }

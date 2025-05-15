@@ -7,4 +7,5 @@ import lombok.*;
 public class ChatResponse {
   private Long id;
   private String name;
+  private String action;
 }

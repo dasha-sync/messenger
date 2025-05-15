@@ -4,7 +4,7 @@ import com.talkwire.messenger.dto.user.*;
 import com.talkwire.messenger.exception.user.*;
 import com.talkwire.messenger.model.User;
 import com.talkwire.messenger.repository.UserRepository;
-import com.talkwire.messenger.security.*;
+import com.talkwire.messenger.util.*;
 import jakarta.transaction.Transactional;
 import java.security.*;
 import java.util.List;

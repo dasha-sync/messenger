@@ -9,6 +9,7 @@ import java.util.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.messaging.handler.annotation.*;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ChatController {
   private final ChatService chatService;
+  private final SimpMessagingTemplate messagingTemplate;
 
   @MessageMapping("/chat")
   @SendTo("/topic/messages")
@@ -40,18 +42,22 @@ public class ChatController {
   }
 
   @PostMapping("/chats/create")
-  public ResponseEntity<ApiResponse<ChatResponse>> createChat(
+  @SendTo("/topic/chats/")
+  public ResponseEntity<ChatResponse> createChat(
       @Valid @RequestBody CreateChatRequest request,
       Principal principal) {
     ChatResponse response = chatService.createChat(request, principal);
-    return ResponseEntity.ok(new ApiResponse<>("Chat created successfully", response));
+
+    return ResponseEntity.ok(response);
   }
 
   @DeleteMapping("/chats/{chatId}/destroy")
-  public ResponseEntity<ApiResponse<Void>> deleteChat(
+  @SendTo("/topic/chats/")
+  public ResponseEntity<ChatResponse> deleteChat(
       @PathVariable Long chatId,
       Principal principal) {
-    chatService.deleteChat(chatId, principal);
-    return ResponseEntity.ok(new ApiResponse<>("Chat deleted successfully", null));
+    ChatResponse response = chatService.deleteChat(chatId, principal);
+
+    return ResponseEntity.ok(response);
   }
 }
