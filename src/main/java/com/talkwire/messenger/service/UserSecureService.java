@@ -2,7 +2,7 @@ package com.talkwire.messenger.service;
 
 import com.talkwire.messenger.model.User;
 import com.talkwire.messenger.repository.UserRepository;
-import com.talkwire.messenger.security.UserDetailsImplementation;
+import com.talkwire.messenger.util.UserDetailsImplementation;
 import lombok.*;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;

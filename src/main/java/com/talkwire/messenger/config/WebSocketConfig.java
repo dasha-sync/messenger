@@ -1,5 +1,7 @@
 package com.talkwire.messenger.config;
 
+import com.talkwire.messenger.util.CustomHandshakeHandler;
+import com.talkwire.messenger.util.JwtHandshakeInterceptor;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -21,8 +23,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   @Override
   public void registerStompEndpoints(StompEndpointRegistry registry) {
     registry.addEndpoint("/ws")
-        .setAllowedOrigins("http://localhost:63342") // TODO: поменять на фронтовый домен
         .addInterceptors(jwtHandshakeInterceptor)
+        .setHandshakeHandler(new CustomHandshakeHandler())
         .withSockJS();
+    // .setAllowedOrigins("http://localhost:63342") // TODO: поменять на фронтовый домен
   }
 }

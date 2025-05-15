@@ -1,6 +1,6 @@
-package com.talkwire.messenger.config;
+package com.talkwire.messenger.util;
 
-import com.talkwire.messenger.security.JwtTokenProvider;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.server.*;
@@ -49,6 +49,15 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
   }
 
   private String getJwtFromRequest(ServerHttpRequest request) {
+    List<String> authHeaders = request.getHeaders().get("Authorization");
+    if (authHeaders != null && !authHeaders.isEmpty()) {
+      String header = authHeaders.get(0);
+      if (header.startsWith("Bearer ")) {
+        return header.substring(7);
+      }
+    }
+
+    // fallback to query param for SockJS compatibility
     String query = request.getURI().getQuery();
     if (query != null) {
       Map<String, String> queryParams = UriComponentsBuilder
@@ -59,6 +68,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
       return queryParams.get("token");
     }
+
     return null;
   }
 }

@@ -12,4 +12,5 @@ public class MessageResponse {
   private Long userId;
   private String username;
   private Long chatId;
+  private String action;
 }
