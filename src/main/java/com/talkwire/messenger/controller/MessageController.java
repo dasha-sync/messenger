@@ -8,6 +8,8 @@ import java.security.Principal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class MessageController {
   private final MessageService messageService;
+  private final SimpMessagingTemplate messagingTemplate;
 
   @GetMapping("{chatId}/messages")
   public ResponseEntity<ApiResponse<List<MessageResponse>>> getMessages(
@@ -27,31 +30,36 @@ public class MessageController {
   }
 
   @PostMapping("{chatId}/messages/create")
-  public ResponseEntity<ApiResponse<MessageResponse>> createMessage(
+  @SendTo("/topic/chats/{chatId}/messages")
+  public ResponseEntity<MessageResponse> createMessage(
       @PathVariable Long chatId,
       @Valid @RequestBody CreateMessageRequest request,
       Principal principal) {
     MessageResponse message = messageService.createMessage(chatId, request, principal);
-    return ResponseEntity.ok(new ApiResponse<>("Message created successfully", message));
+
+    return ResponseEntity.ok(message);
   }
 
   @PatchMapping("{chatId}/messages/{messageId}/update")
-  public ResponseEntity<ApiResponse<MessageResponse>> updateMessage(
+  @SendTo("/topic/chats/{chatId}/messages")
+  public ResponseEntity<MessageResponse> updateMessage(
       @PathVariable Long chatId,
       @PathVariable Long messageId,
       @Valid @RequestBody UpdateMessageRequest request,
       Principal principal) {
-
     MessageResponse message = messageService.updateMessage(chatId, messageId, request, principal);
-    return ResponseEntity.ok(new ApiResponse<>("Message created successfully", message));
+
+    return ResponseEntity.ok(message);
   }
 
   @DeleteMapping("{chatId}/messages/{messageId}/destroy")
-  public ResponseEntity<ApiResponse<Void>> deleteMessage(
+  @SendTo("/topic/chats/{chatId}/messages")
+  public ResponseEntity<MessageResponse> deleteMessage(
       @PathVariable Long chatId,
       @PathVariable Long messageId,
       Principal principal) {
-    messageService.deleteMessage(chatId, messageId, principal);
-    return ResponseEntity.ok(new ApiResponse<>("Message deleted successfully", null));
+    MessageResponse message = messageService.deleteMessage(chatId, messageId, principal);
+
+    return ResponseEntity.ok(message);
   }
 }

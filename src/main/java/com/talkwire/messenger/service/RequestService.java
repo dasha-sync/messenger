@@ -24,7 +24,7 @@ public class RequestService {
     User currentUser = userService.getCurrentUser(principal);
     return requestRepository.findAllByUserId(currentUser.getId())
         .stream()
-        .map(this::mapToRequestDto)
+        .map(request -> mapToRequestDto(request, "GET"))
         .toList();
   }
 
@@ -32,7 +32,7 @@ public class RequestService {
     User currentUser = userService.getCurrentUser(principal);
     return requestRepository.findAllByContactId(currentUser.getId())
         .stream()
-        .map(this::mapToRequestDto)
+        .map(request -> mapToRequestDto(request, "GET"))
         .toList();
   }
 
@@ -42,7 +42,7 @@ public class RequestService {
         .orElseThrow(() -> new RequestNotFoundException("Request not found"));
 
     validateUserRequestAccess(request, currentUser.getId());
-    return mapToRequestDto(request);
+    return mapToRequestDto(request, "GET");
   }
 
   public RequestResponse createRequest(Long userId, Principal principal) {
@@ -66,19 +66,21 @@ public class RequestService {
     request.setUser(currentUser);
     request.setContact(contactUser);
     requestRepository.save(request);
-    return mapToRequestDto(request);
+    return mapToRequestDto(request, "CREATE");
   }
 
-  public void deleteUserRequest(Long requestId, Principal principal) {
+  public RequestResponse deleteUserRequest(Long requestId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
     Request request = requestRepository.findById(requestId)
         .orElseThrow(() -> new RequestNotFoundException("Request not found"));
 
     validateUserRequestAccess(request, currentUser.getId());
     requestRepository.delete(request);
+
+    return mapToRequestDto(request, "DELETE");
   }
 
-  public ContactResponse approveRequest(Long requestId, Principal principal) {
+  public RequestResponse approveRequest(Long requestId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
     Request request = requestRepository.findById(requestId)
         .orElseThrow(() -> new RequestNotFoundException("Request not found"));
@@ -90,16 +92,18 @@ public class RequestService {
     contact.setContact(request.getContact());
     contactRepository.save(contact);
 
-    return contactService.mapToContactDto(contact);
+    return mapToRequestDto(request, "DELETE");
   }
 
-  public void deleteRequest(Long requestId, Principal principal) {
+  public RequestResponse deleteRequest(Long requestId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
     Request request = requestRepository.findById(requestId)
         .orElseThrow(() -> new RequestNotFoundException("Request not found"));
 
     validateRequestAccess(request, currentUser.getId());
     requestRepository.delete(request);
+
+    return mapToRequestDto(request, "DELETE");
   }
 
   private void validateUserRequestAccess(Request request, Long userId) {
@@ -114,12 +118,14 @@ public class RequestService {
     }
   }
 
-  private RequestResponse mapToRequestDto(Request request) {
+  private RequestResponse mapToRequestDto(Request request, String action) {
     return new RequestResponse(
         request.getId(),
         request.getUser().getId(),
         request.getUser().getUsername(),
         request.getContact().getId(),
-        request.getContact().getUsername());
+        request.getContact().getUsername(),
+        action
+    );
   }
 }

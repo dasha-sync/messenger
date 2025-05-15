@@ -1,4 +1,4 @@
-package com.talkwire.messenger.security;
+package com.talkwire.messenger.util;
 
 import com.talkwire.messenger.model.User;
 import java.util.*;

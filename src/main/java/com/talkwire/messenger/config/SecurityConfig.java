@@ -1,6 +1,6 @@
 package com.talkwire.messenger.config;
 
-import com.talkwire.messenger.security.TokenFilter;
+import com.talkwire.messenger.util.TokenFilter;
 import com.talkwire.messenger.service.UserSecureService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.*;
