@@ -2,6 +2,7 @@ package com.talkwire.messenger.config;
 
 import com.talkwire.messenger.util.TokenFilter;
 import com.talkwire.messenger.service.UserSecureService;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.*;
 import org.springframework.http.HttpStatus;
@@ -36,8 +37,14 @@ public class SecurityConfig {
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
         .csrf(AbstractHttpConfigurer::disable)
-        .cors(cors -> cors.configurationSource(request ->
-            new CorsConfiguration().applyPermitDefaultValues()))
+        .cors(cors -> cors.configurationSource(request -> {
+          CorsConfiguration config = new CorsConfiguration();
+          config.setAllowedOrigins(List.of("http://localhost:5173"));
+          config.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
+          config.setAllowedHeaders(List.of("*"));
+          config.setAllowCredentials(true);
+          return config;
+        }))
         .exceptionHandling(exceptions -> exceptions
             .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
         .sessionManagement(session -> session
