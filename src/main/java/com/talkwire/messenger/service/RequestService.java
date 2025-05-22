@@ -6,6 +6,7 @@ import com.talkwire.messenger.exception.request.*;
 import com.talkwire.messenger.exception.user.UserNotFoundException;
 import com.talkwire.messenger.model.*;
 import com.talkwire.messenger.repository.*;
+import jakarta.transaction.Transactional;
 import java.security.Principal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -80,6 +81,7 @@ public class RequestService {
     return mapToRequestDto(request, "DELETE");
   }
 
+
   public RequestResponse approveRequest(Long requestId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
     Request request = requestRepository.findById(requestId)
@@ -94,6 +96,7 @@ public class RequestService {
 
     return mapToRequestDto(request, "DELETE");
   }
+
 
   public RequestResponse deleteRequest(Long requestId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);

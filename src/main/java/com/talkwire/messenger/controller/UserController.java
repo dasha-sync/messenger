@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
   private final UserService userService;
 
-  @GetMapping
+  @PostMapping
   public ResponseEntity<ApiResponse<List<UserResponse>>> getUsers(
       @RequestBody FindUserRequest request) {
     List<UserResponse> users = userService.getUsers(request);

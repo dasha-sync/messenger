@@ -65,7 +65,6 @@ public class RequestController {
 
   @PostMapping("/requests/{requestId}/approve")
   @SendTo("/topic/requests")
-  @Transactional
   public ResponseEntity<RequestResponse> approveRequest(
       @PathVariable Long requestId,
       Principal principal) {
@@ -77,7 +76,6 @@ public class RequestController {
 
   @PostMapping("/requests/{requestId}/reject")
   @SendTo("/topic/requests")
-  @Transactional
   public ResponseEntity<RequestResponse> rejectRequest(
       @PathVariable Long requestId,
       Principal principal) {

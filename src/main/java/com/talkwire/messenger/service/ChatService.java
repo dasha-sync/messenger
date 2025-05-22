@@ -25,7 +25,7 @@ public class ChatService {
     User currentUser = userService.getCurrentUser(principal);
     List<ChatResponse> chats = chatMemberRepository.findChatsByUserId(currentUser.getId())
         .stream()
-        .map(chat -> mapToChatDto(chat, "GET"))
+        .map(chat -> mapToChatDto(chat, "GET", currentUser))
         .toList();
 
     return new ChatListResponse(currentUser.getUsername(), chats);
@@ -41,7 +41,7 @@ public class ChatService {
         .findFirst()
         .orElseThrow(() -> new ChatNotFoundException("Chat not found"));
 
-    return mapToChatDto(chat, "GET");
+    return mapToChatDto(chat, "GET", currentUser);
   }
 
   @Transactional
@@ -69,7 +69,7 @@ public class ChatService {
       throw new ChatOperationException("Chat members not created");
     }
 
-    return mapToChatDto(chat, "CREATE");
+    return mapToChatDto(chat, "CREATE", currentUser);
   }
 
   @Transactional
@@ -84,7 +84,7 @@ public class ChatService {
       throw new ChatOperationException("Failed to delete chat");
     }
 
-    return mapToChatDto(chat, "DELETE");
+    return mapToChatDto(chat, "DELETE", currentUser);
   }
 
   private void createChatMember(Chat chat, User user) {
@@ -100,7 +100,7 @@ public class ChatService {
     }
   }
 
-  private ChatResponse mapToChatDto(Chat chat, String action) {
-    return new ChatResponse(chat.getId(), chat.getName(), action);
+  private ChatResponse mapToChatDto(Chat chat, String action, User currentUser) {
+    return new ChatResponse(chat.getId(), chat.getName(currentUser), action);
   }
 }

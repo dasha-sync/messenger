@@ -13,7 +13,7 @@ public class SignupRequest {
       regexp = "^[a-z][a-z0-9_.-]*$",
       message = "Username can only contain Latin lowercase letters,"
           + "numbers, '_', '-', '.' and must begin with the letter")
-  @Size(min = 6, max = 20, message = "Username must contain 6 - 20 symbols")
+  @Size(min = 3, max = 20, message = "Username must contain 3 - 20 symbols")
   private String username;
 
   @Email(message = "Non correct email format")
