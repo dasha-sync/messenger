@@ -107,13 +107,15 @@ public class MessageService {
 
   private void validateMessageExists(Long messageId) {
     if (!messageRepository.existsById(messageId)) {
-      throw new MessageOperationException("Failed to verify message operation: message not found after operation");
+      throw new MessageOperationException("Failed to verify message operation:"
+          + " message not found after operation");
     }
   }
 
   private void validateMessageDeleted(Long messageId) {
     if (messageRepository.existsById(messageId)) {
-      throw new MessageOperationException("Failed to delete message: message still exists after deletion");
+      throw new MessageOperationException("Failed to delete message:"
+          + " message still exists after deletion");
     }
   }
 }

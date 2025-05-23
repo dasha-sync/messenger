@@ -78,7 +78,7 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(UserNotFoundException.class)
-  public ResponseEntity<ErrorResponse> handleConflictException(
+  public ResponseEntity<ErrorResponse> handleNotFoundException(
       UserNotFoundException ex,
       HttpServletRequest request
   ) {

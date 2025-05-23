@@ -84,8 +84,10 @@ public class RequestService {
 
     validateRequestAccess(request, currentUser.getId());
 
-    if (contactRepository.existsByUserIdAndContactId(request.getUser().getId(), request.getContact().getId()) ||
-        contactRepository.existsByUserIdAndContactId(request.getContact().getId(), request.getUser().getId())) {
+    if (contactRepository.existsByUserIdAndContactId(
+            request.getUser().getId(), request.getContact().getId())
+        || contactRepository.existsByUserIdAndContactId(
+            request.getContact().getId(), request.getUser().getId())) {
 
       throw new RequestOperationException("Contact already exists");
     }

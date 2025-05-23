@@ -39,13 +39,13 @@ public class ContactService {
     // Delete both contacts
     contactRepository.delete(contact);
     if (reverseContact != null) {
-        contactRepository.delete(reverseContact);
+      contactRepository.delete(reverseContact);
     }
 
     // Verify deletion
-    if (contactRepository.existsById(contactId) ||
-        (reverseContact != null && contactRepository.existsById(reverseContact.getId()))) {
-        throw new ContactOperationException("Failed to delete contact(s)");
+    if (contactRepository.existsById(contactId)
+        || (reverseContact != null && contactRepository.existsById(reverseContact.getId()))) {
+      throw new ContactOperationException("Failed to delete contact(s)");
     }
   }
 

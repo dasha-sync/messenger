@@ -8,7 +8,6 @@ import com.talkwire.messenger.repository.*;
 import jakarta.transaction.Transactional;
 import java.security.Principal;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -69,8 +68,8 @@ public class ChatService {
       throw new ChatOperationException("Failed to create chat");
     }
 
-    if (savedChat.getChatMembers().isEmpty() ||
-        !chatMemberRepository.existsByChatId(savedChat.getId())) {
+    if (savedChat.getChatMembers().isEmpty()
+        || !chatMemberRepository.existsByChatId(savedChat.getId())) {
       throw new ChatOperationException("Failed to create chat members");
     }
 
