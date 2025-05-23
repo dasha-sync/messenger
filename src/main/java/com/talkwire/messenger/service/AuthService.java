@@ -44,8 +44,7 @@ public class AuthService {
     try {
       Authentication authentication = authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(
-              request.getUsername(), request.getPassword())
-      );
+              request.getUsername(), request.getPassword()));
 
       SecurityContextHolder.getContext().setAuthentication(authentication);
       String jwt = jwtTokenProvider.generateToken(authentication);

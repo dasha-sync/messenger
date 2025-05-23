@@ -77,6 +77,14 @@ public class GlobalExceptionHandler {
     return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
   }
 
+  @ExceptionHandler(UserNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleConflictException(
+      UserNotFoundException ex,
+      HttpServletRequest request
+  ) {
+    return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+  }
+
   @ExceptionHandler(ChatAccessDeniedException.class)
   public ResponseEntity<ErrorResponse> handleForbiddenException(
       ChatAccessDeniedException ex,
@@ -141,17 +149,26 @@ public class GlobalExceptionHandler {
     return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
   }
 
-  @ExceptionHandler(UserNotFoundException.class)
+
+  @ExceptionHandler(RequestOperationException.class)
   public ResponseEntity<ErrorResponse> handleConflictException(
-      UserNotFoundException ex,
+      RequestOperationException ex,
       HttpServletRequest request
   ) {
     return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
   }
 
-  @ExceptionHandler(RequestOperationException.class)
+  @ExceptionHandler(UserOperationException.class)
   public ResponseEntity<ErrorResponse> handleConflictException(
-      RequestOperationException ex,
+      UserOperationException ex,
+      HttpServletRequest request
+  ) {
+    return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), request);
+  }
+
+  @ExceptionHandler(ContactOperationException.class)
+  public ResponseEntity<ErrorResponse> handleConflictException(
+      ContactOperationException ex,
       HttpServletRequest request
   ) {
     return buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), request);

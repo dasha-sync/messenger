@@ -19,4 +19,6 @@ public interface ChatMemberRepository extends JpaRepository<ChatMember, Long> {
       + "JOIN ChatMember cm2 ON cm1.chat = cm2.chat "
       + "WHERE cm1.user.id = :userId1 AND cm2.user.id = :userId2")
   List<Chat> findChatsByTwoUsers(@Param("userId1") Long userId1, @Param("userId2") Long userId2);
+
+  boolean existsByChatId(Long id);
 }

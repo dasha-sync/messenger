@@ -58,7 +58,7 @@ public class RequestController {
   public ResponseEntity<RequestResponse> deleteUserRequest(
       @PathVariable Long requestId,
       Principal principal) {
-    RequestResponse response = requestService.deleteUserRequest(requestId, principal);
+    RequestResponse response = requestService.deleteRequest(requestId, principal);
 
     return ResponseEntity.ok(response);
   }
@@ -69,8 +69,6 @@ public class RequestController {
       @PathVariable Long requestId,
       Principal principal) {
     RequestResponse response = requestService.approveRequest(requestId, principal);
-    requestService.deleteRequest(requestId, principal);
-
     return ResponseEntity.ok(response);
   }
 

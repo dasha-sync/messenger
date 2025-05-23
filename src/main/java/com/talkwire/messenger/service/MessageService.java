@@ -44,8 +44,9 @@ public class MessageService {
     message.setText(request.getText());
     message.setCreatedAt(LocalDateTime.now());
 
-    messageRepository.save(message);
-    return mapToMessageDto(message, "CREATE");
+    Message savedMessage = messageRepository.save(message);
+    validateMessageExists(savedMessage.getId());
+    return mapToMessageDto(savedMessage, "CREATE");
   }
 
   public MessageResponse updateMessage(
@@ -76,6 +77,7 @@ public class MessageService {
     validateChatAccess(currentUser.getId(), chatId);
     validateMessageOwnership(currentUser, message);
     messageRepository.delete(message);
+    validateMessageDeleted(messageId);
 
     return mapToMessageDto(message, "DELETE");
   }
@@ -100,7 +102,18 @@ public class MessageService {
         message.getUser().getId(),
         message.getUser().getUsername(),
         message.getChat().getId(),
-        action
-    );
+        action);
+  }
+
+  private void validateMessageExists(Long messageId) {
+    if (!messageRepository.existsById(messageId)) {
+      throw new MessageOperationException("Failed to verify message operation: message not found after operation");
+    }
+  }
+
+  private void validateMessageDeleted(Long messageId) {
+    if (messageRepository.existsById(messageId)) {
+      throw new MessageOperationException("Failed to delete message: message still exists after deletion");
+    }
   }
 }

@@ -63,25 +63,34 @@ public class ChatService {
     Chat chat = new Chat();
     createChatMember(chat, currentUser);
     createChatMember(chat, targetUser);
-    chatRepository.save(chat);
+    Chat savedChat = chatRepository.save(chat);
 
-    if (chat.getChatMembers().isEmpty()) {
-      throw new ChatOperationException("Chat members not created");
+    if (savedChat.getId() == null || !chatRepository.existsById(savedChat.getId())) {
+      throw new ChatOperationException("Failed to create chat");
     }
 
-    return mapToChatDto(chat, "CREATE", currentUser);
+    if (savedChat.getChatMembers().isEmpty() ||
+        !chatMemberRepository.existsByChatId(savedChat.getId())) {
+      throw new ChatOperationException("Failed to create chat members");
+    }
+
+    return mapToChatDto(savedChat, "CREATE", currentUser);
   }
 
   @Transactional
   public ChatResponse deleteChat(Long chatId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
     Chat chat = chatRepository.findById(chatId)
-        .orElseThrow(() -> new  ChatNotFoundException("Chat not found"));
+        .orElseThrow(() -> new ChatNotFoundException("Chat not found"));
     validateChatAccess(currentUser.getId(), chatId);
     chatRepository.delete(chat);
 
     if (chatRepository.existsById(chatId)) {
       throw new ChatOperationException("Failed to delete chat");
+    }
+
+    if (chatMemberRepository.existsByChatId(chatId)) {
+      throw new ChatOperationException("Failed to delete chat members");
     }
 
     return mapToChatDto(chat, "DELETE", currentUser);

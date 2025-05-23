@@ -46,6 +46,7 @@ public class RequestService {
     return mapToRequestDto(request, "GET");
   }
 
+  @Transactional
   public RequestResponse createRequest(Long userId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
     User contactUser = userRepository.findById(userId)
@@ -59,29 +60,23 @@ public class RequestService {
       throw new RequestOperationException("Contact already exists");
     }
 
-    if (contactRepository.existsByUserIdAndContactId(currentUser.getId(), contactUser.getId())) {
+    if (requestRepository.existsByUserIdAndContactId(currentUser.getId(), contactUser.getId())) {
       throw new RequestOperationException("Request already exists");
     }
 
     Request request = new Request();
     request.setUser(currentUser);
     request.setContact(contactUser);
-    requestRepository.save(request);
+    request = requestRepository.save(request);
+
+    if (request.getId() == null || !requestRepository.existsById(request.getId())) {
+      throw new RequestOperationException("Failed to create request");
+    }
+
     return mapToRequestDto(request, "CREATE");
   }
 
-  public RequestResponse deleteUserRequest(Long requestId, Principal principal) {
-    User currentUser = userService.getCurrentUser(principal);
-    Request request = requestRepository.findById(requestId)
-        .orElseThrow(() -> new RequestNotFoundException("Request not found"));
-
-    validateUserRequestAccess(request, currentUser.getId());
-    requestRepository.delete(request);
-
-    return mapToRequestDto(request, "DELETE");
-  }
-
-
+  @Transactional
   public RequestResponse approveRequest(Long requestId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
     Request request = requestRepository.findById(requestId)
@@ -89,15 +84,42 @@ public class RequestService {
 
     validateRequestAccess(request, currentUser.getId());
 
-    Contact contact = new Contact();
-    contact.setUser(request.getUser());
-    contact.setContact(request.getContact());
-    contactRepository.save(contact);
+    if (contactRepository.existsByUserIdAndContactId(request.getUser().getId(), request.getContact().getId()) ||
+        contactRepository.existsByUserIdAndContactId(request.getContact().getId(), request.getUser().getId())) {
+
+      throw new RequestOperationException("Contact already exists");
+    }
+
+    // Create contact for the request initiator
+    Contact contact1 = new Contact();
+    contact1.setUser(request.getUser());
+    contact1.setContact(request.getContact());
+    contact1 = contactRepository.save(contact1);
+
+    if (contact1.getId() == null || !contactRepository.existsById(contact1.getId())) {
+      throw new RequestOperationException("Failed to create contact for request initiator");
+    }
+
+    // Create contact for the request approver
+    Contact contact2 = new Contact();
+    contact2.setUser(request.getContact());
+    contact2.setContact(request.getUser());
+    contact2 = contactRepository.save(contact2);
+
+    if (contact2.getId() == null || !contactRepository.existsById(contact2.getId())) {
+      throw new RequestOperationException("Failed to create contact for request approver");
+    }
+
+    requestRepository.delete(request);
+
+    if (requestRepository.existsById(requestId)) {
+      throw new RequestOperationException("Failed to delete request after contact creation");
+    }
 
     return mapToRequestDto(request, "DELETE");
   }
 
-
+  @Transactional
   public RequestResponse deleteRequest(Long requestId, Principal principal) {
     User currentUser = userService.getCurrentUser(principal);
     Request request = requestRepository.findById(requestId)
@@ -105,6 +127,10 @@ public class RequestService {
 
     validateRequestAccess(request, currentUser.getId());
     requestRepository.delete(request);
+
+    if (requestRepository.existsById(requestId)) {
+      throw new RequestOperationException("Failed to delete request");
+    }
 
     return mapToRequestDto(request, "DELETE");
   }

@@ -40,12 +40,11 @@ public class UserController {
     return ResponseEntity.ok(new ApiResponse<>("User updated successfully", response));
   }
 
-  @DeleteMapping("/{userId}/destroy")
+  @DeleteMapping("/destroy")
   public ResponseEntity<ApiResponse<Void>> deleteUser(
-      @PathVariable Long userId,
       @Valid @RequestBody DeleteUserRequest request,
       Principal principal) {
-    userService.deleteUser(userId, request, principal);
+    userService.deleteUser(request, principal);
     return ResponseEntity.ok(new ApiResponse<>("User deleted successfully", null));
   }
 }

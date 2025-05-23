@@ -27,8 +27,7 @@ public class UserService {
     List<User> users = (isBlank(request.getUsername()) && isBlank(request.getEmail()))
         ? userRepository.findAllByOrderByUsernameAsc()
         : userRepository.findByUsernameContainingIgnoreCaseAndEmailContainingIgnoreCase(
-        request.getUsername(), request.getEmail()
-    );
+            request.getUsername(), request.getEmail());
 
     return users.stream()
         .map(this::mapToUserDto)
@@ -61,8 +60,8 @@ public class UserService {
           new UsernamePasswordAuthenticationToken(
               currentUser.getUsername(),
               request.getNewPassword().isBlank()
-                  ? request.getCurrentPassword() : request.getNewPassword())
-      );
+                  ? request.getCurrentPassword()
+                  : request.getNewPassword()));
 
       SecurityContextHolder.getContext().setAuthentication(authentication);
       String jwt = jwtTokenProvider.generateToken(authentication);
@@ -74,15 +73,18 @@ public class UserService {
   }
 
   @Transactional
-  public void deleteUser(Long userId, DeleteUserRequest request, Principal principal) {
+  public void deleteUser(DeleteUserRequest request, Principal principal) {
     User currentUser = getCurrentUser(principal);
-    validateUserAccess(userId, currentUser);
-
     if (!passwordEncoder.matches(request.getPassword(), currentUser.getPassword())) {
       throw new UserDeleteException("Wrong password");
     }
 
+    Long userId = currentUser.getId();
     userRepository.delete(currentUser);
+
+    if (userRepository.existsById(userId)) {
+      throw new UserDeleteException("Failed to delete user");
+    }
   }
 
   public User getCurrentUser(Principal principal) {

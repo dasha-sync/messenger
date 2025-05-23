@@ -29,7 +29,24 @@ public class ContactService {
         .orElseThrow(() -> new ContactNotFoundException("Contact not found"));
 
     validateContactAccess(contact, currentUser.getId());
+
+    // Find and delete the reverse contact
+    Contact reverseContact = contactRepository.findByUserIdAndContactId(
+        contact.getContact().getId(),
+        contact.getUser().getId()
+    ).orElse(null);
+
+    // Delete both contacts
     contactRepository.delete(contact);
+    if (reverseContact != null) {
+        contactRepository.delete(reverseContact);
+    }
+
+    // Verify deletion
+    if (contactRepository.existsById(contactId) ||
+        (reverseContact != null && contactRepository.existsById(reverseContact.getId()))) {
+        throw new ContactOperationException("Failed to delete contact(s)");
+    }
   }
 
   public ContactResponse mapToContactDto(Contact contact) {
