@@ -23,6 +23,7 @@ public class DataSeeder {
       ChatMemberRepository chatMemberRepository,
       ContactRepository contactRepository,
       RequestRepository requestRepository,
+      MessageRepository messageRepository,
       PasswordEncoder passwordEncoder) {
 
     return args -> {
@@ -55,7 +56,7 @@ public class DataSeeder {
 
         for (int i = 0; i < 10; i++) {
           Chat chat = new Chat();
-          chat.setName("Chat " + i + " for " + user.getUsername());
+          chat.setName("default");
           chatRepository.save(chat);
 
           ChatMember userChatMember = new ChatMember();
@@ -68,8 +69,23 @@ public class DataSeeder {
           otherChatMember.setUser(randomUser);
           otherChatMember.setChat(chat);
           chatMemberRepository.save(otherChatMember);
+
+          // Add two messages from each user in the chat
+          for (ChatMember member : Arrays.asList(userChatMember, otherChatMember)) {
+            for (int j = 0; j < 2; j++) {
+              Message message = new Message();
+              message.setUser(member.getUser());
+              message.setChat(chat);
+              message.setText(faker.lorem().sentence()); // Generate random text
+              messageRepository.save(message);
+              logger.info("Created message from {} in chat {}: {}",
+                  member.getUser().getUsername(),
+                  chat.getId(),
+                  message.getText());
+            }
+          }
         }
-        logger.info("Created 10 chats for user: {}", user.getUsername());
+        logger.info("Created 10 chats with messages for user: {}", user.getUsername());
 
         int contactsCreated = 0;
         int attempts = 0;
