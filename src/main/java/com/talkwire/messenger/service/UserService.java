@@ -2,8 +2,14 @@ package com.talkwire.messenger.service;
 
 import com.talkwire.messenger.dto.user.*;
 import com.talkwire.messenger.exception.user.*;
+import com.talkwire.messenger.model.Chat;
+import com.talkwire.messenger.model.Contact;
+import com.talkwire.messenger.model.Request;
 import com.talkwire.messenger.model.User;
 import com.talkwire.messenger.repository.UserRepository;
+import com.talkwire.messenger.repository.ChatMemberRepository;
+import com.talkwire.messenger.repository.RequestRepository;
+import com.talkwire.messenger.repository.ContactRepository;
 import com.talkwire.messenger.util.*;
 import jakarta.transaction.Transactional;
 import java.security.*;
@@ -22,6 +28,9 @@ public class UserService {
   private final PasswordEncoder passwordEncoder;
   private final AuthenticationManager authenticationManager;
   private final JwtTokenProvider jwtTokenProvider;
+  private final ChatMemberRepository chatMemberRepository;
+  private final RequestRepository requestRepository;
+  private final ContactRepository contactRepository;
 
   public List<UserResponse> getUsers(FindUserRequest request) {
     List<User> users = (isBlank(request.getUsername()) && isBlank(request.getEmail()))
@@ -41,9 +50,8 @@ public class UserService {
     return mapToUserDto(user);
   }
 
-  public AuthResponse updateUser(Long userId, UpdateUserRequest request, Principal principal) {
+  public AuthResponse updateUser(UpdateUserRequest request, Principal principal) {
     User currentUser = getCurrentUser(principal);
-    validateUserAccess(userId, currentUser);
 
     if (!passwordEncoder.matches(request.getCurrentPassword(), currentUser.getPassword())) {
       throw new UserUpdateException("Current password is incorrect");
@@ -85,6 +93,22 @@ public class UserService {
     if (userRepository.existsById(userId)) {
       throw new UserDeleteException("Failed to delete user");
     }
+  }
+
+  public UserRelationsResponse getUserRelations(Long userId, Principal principal) {
+    Long currentUserId = getCurrentUser(principal).getId();
+
+    if (currentUserId.equals(userId)) {
+      throw new UserOperationException("Relations can't be found between two equal users");
+    }
+
+    UserRelationsResponse response = new UserRelationsResponse();
+
+    setChatRelation(response, currentUserId, userId);
+    setContactRelation(response, currentUserId, userId);
+    setRequestRelations(response, currentUserId, userId);
+
+    return response;
   }
 
   public User getCurrentUser(Principal principal) {
@@ -130,5 +154,28 @@ public class UserService {
 
   private boolean hasChanged(String newValue, String currentValue) {
     return !isBlank(newValue) && !newValue.equals(currentValue);
+  }
+
+  private void setChatRelation(UserRelationsResponse response, Long currentUserId, Long userId) {
+    List<Chat> chats = chatMemberRepository.findChatsByTwoUsers(currentUserId, userId);
+    if (!chats.isEmpty()) {
+      response.setHasChat(chats.get(0).getId());
+    }
+  }
+
+  private void setContactRelation(UserRelationsResponse response, Long currentUserId, Long userId) {
+    contactRepository.findByUserIdAndContactId(currentUserId, userId)
+        .ifPresent(contact -> response.setHasContact(contact.getId()));
+  }
+
+  private void setRequestRelations(
+      UserRelationsResponse response,
+      Long currentUserId,
+      Long userId) {
+    requestRepository.findByUserIdAndContactId(currentUserId, userId)
+        .ifPresent(request -> response.setHasOutgoingRequest(request.getId()));
+
+    requestRepository.findByUserIdAndContactId(userId, currentUserId)
+        .ifPresent(request -> response.setHasIncomingRequest(request.getId()));
   }
 }

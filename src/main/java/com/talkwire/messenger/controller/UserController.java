@@ -31,12 +31,11 @@ public class UserController {
     return ResponseEntity.ok(new ApiResponse<>("User retrieved successfully", user));
   }
 
-  @PatchMapping("/{userId}/update")
+  @PatchMapping("/update")
   public ResponseEntity<ApiResponse<AuthResponse>> updateUser(
-      @PathVariable Long userId,
       @Valid @RequestBody UpdateUserRequest request,
       Principal principal) {
-    AuthResponse response = userService.updateUser(userId, request, principal);
+    AuthResponse response = userService.updateUser(request, principal);
     return ResponseEntity.ok(new ApiResponse<>("User updated successfully", response));
   }
 
@@ -46,5 +45,13 @@ public class UserController {
       Principal principal) {
     userService.deleteUser(request, principal);
     return ResponseEntity.ok(new ApiResponse<>("User deleted successfully", null));
+  }
+
+  @GetMapping("/{userId}/relations")
+  public ResponseEntity<ApiResponse<UserRelationsResponse>> getUserRelations(
+      @PathVariable Long userId,
+      Principal principal) {
+    UserRelationsResponse response = userService.getUserRelations(userId, principal);
+    return ResponseEntity.ok(new ApiResponse<>("Relations checked successfully", response));
   }
 }

@@ -37,21 +37,21 @@ public class ChatController {
 
   @PostMapping("/chats/create")
   @SendTo("/topic/chats/")
-  public ResponseEntity<ChatResponse> createChat(
+  public ResponseEntity<ApiResponse<ChatResponse>> createChat(
       @Valid @RequestBody CreateChatRequest request,
       Principal principal) {
     ChatResponse response = chatService.createChat(request, principal);
 
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(new ApiResponse<>("Chat created successfully", response));
   }
 
   @DeleteMapping("/chats/{chatId}/destroy")
   @SendTo("/topic/chats/")
-  public ResponseEntity<ChatResponse> deleteChat(
+  public ResponseEntity<ApiResponse<ChatResponse>> deleteChat(
       @PathVariable Long chatId,
       Principal principal) {
     ChatResponse response = chatService.deleteChat(chatId, principal);
 
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(new ApiResponse<>("Chat deleted successfully", response));
   }
 }

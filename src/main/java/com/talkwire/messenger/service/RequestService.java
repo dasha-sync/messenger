@@ -42,7 +42,7 @@ public class RequestService {
     Request request = requestRepository.findById(requestId)
         .orElseThrow(() -> new RequestNotFoundException("Request not found"));
 
-    validateUserRequestAccess(request, currentUser.getId());
+    validateRequestAccess(request, currentUser.getId());
     return mapToRequestDto(request, "GET");
   }
 
@@ -137,15 +137,9 @@ public class RequestService {
     return mapToRequestDto(request, "DELETE");
   }
 
-  private void validateUserRequestAccess(Request request, Long userId) {
-    if (!request.getUser().getId().equals(userId)) {
-      throw new RequestAccessDeniedException("Access denied: It is not your user request");
-    }
-  }
-
   private void validateRequestAccess(Request request, Long userId) {
-    if (!request.getContact().getId().equals(userId)) {
-      throw new RequestAccessDeniedException("Access denied: It is not your request");
+    if (!request.getUser().getId().equals(userId) && !request.getContact().getId().equals(userId)) {
+      throw new RequestAccessDeniedException("Access denied: It is not your user request");
     }
   }
 
