@@ -32,7 +32,7 @@ public class RequestController {
   @GetMapping("/requests")
   public ResponseEntity<ApiResponse<List<RequestResponse>>> getRequests(Principal principal) {
     List<RequestResponse> response = requestService.getRequests(principal);
-    return ResponseEntity.ok(new ApiResponse<>("Request retrieved successfully", response));
+    return ResponseEntity.ok(new ApiResponse<>("Requests retrieved successfully", response));
   }
 
   @GetMapping("/requests/{requestId}")
@@ -45,40 +45,40 @@ public class RequestController {
 
   @PostMapping("/users/{userId}/requests/create")
   @SendTo("/topic/requests")
-  public ResponseEntity<RequestResponse> createRequest(
+  public ResponseEntity<ApiResponse<RequestResponse>> createRequest(
       @PathVariable Long userId,
       Principal principal) {
     RequestResponse response = requestService.createRequest(userId, principal);
 
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(new ApiResponse<>("Request created successfully", response));
   }
 
   @DeleteMapping("/requests/{requestId}/destroy")
   @SendTo("/topic/requests")
-  public ResponseEntity<RequestResponse> deleteUserRequest(
+  public ResponseEntity<ApiResponse<RequestResponse>> deleteUserRequest(
       @PathVariable Long requestId,
       Principal principal) {
     RequestResponse response = requestService.deleteRequest(requestId, principal);
 
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(new ApiResponse<>("Request deleted successfully", response));
   }
 
   @PostMapping("/requests/{requestId}/approve")
   @SendTo("/topic/requests")
-  public ResponseEntity<RequestResponse> approveRequest(
+  public ResponseEntity<ApiResponse<RequestResponse>> approveRequest(
       @PathVariable Long requestId,
       Principal principal) {
     RequestResponse response = requestService.approveRequest(requestId, principal);
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(new ApiResponse<>("Request approved successfully", response));
   }
 
   @PostMapping("/requests/{requestId}/reject")
   @SendTo("/topic/requests")
-  public ResponseEntity<RequestResponse> rejectRequest(
+  public ResponseEntity<ApiResponse<RequestResponse>> rejectRequest(
       @PathVariable Long requestId,
       Principal principal) {
     RequestResponse response = requestService.deleteRequest(requestId, principal);
 
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(new ApiResponse<>("Request rejected successfully", response));
   }
 }

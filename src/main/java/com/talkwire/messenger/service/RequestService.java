@@ -60,7 +60,8 @@ public class RequestService {
       throw new RequestOperationException("Contact already exists");
     }
 
-    if (requestRepository.existsByUserIdAndContactId(currentUser.getId(), contactUser.getId())) {
+    if (requestRepository.existsByUserIdAndContactId(currentUser.getId(), contactUser.getId())
+        || requestRepository.existsByUserIdAndContactId(contactUser.getId(), currentUser.getId())) {
       throw new RequestOperationException("Request already exists");
     }
 
