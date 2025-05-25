@@ -20,7 +20,7 @@ public class Message {
   @JoinColumn(name = "chat_id", nullable = false)
   private Chat chat;
 
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "TEXT")
   private String text;
 
   @Column(name = "created_at", nullable = false)
