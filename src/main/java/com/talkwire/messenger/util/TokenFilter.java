@@ -65,10 +65,14 @@ public class TokenFilter extends OncePerRequestFilter {
   }
 
   private String extractJwtFromRequest(HttpServletRequest request) {
-    String headerAuth = request.getHeader("Authorization");
-    return (headerAuth != null && headerAuth.startsWith("Bearer "))
-        ? headerAuth.substring(7)
-        : null;
+    if (request.getCookies() != null) {
+      for (Cookie cookie : request.getCookies()) {
+        if ("jwt".equals(cookie.getName())) {
+          return cookie.getValue();
+        }
+      }
+    }
+    return null;
   }
 
   private void authenticateAndCache(String jwt) {

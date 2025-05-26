@@ -11,6 +11,8 @@ import com.talkwire.messenger.repository.ChatMemberRepository;
 import com.talkwire.messenger.repository.RequestRepository;
 import com.talkwire.messenger.repository.ContactRepository;
 import com.talkwire.messenger.util.*;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import java.security.*;
 import java.util.List;
@@ -50,7 +52,10 @@ public class UserService {
     return mapToUserDto(user);
   }
 
-  public AuthResponse updateUser(UpdateUserRequest request, Principal principal) {
+  public AuthResponse updateUser(
+      UpdateUserRequest request,
+      Principal principal,
+      HttpServletResponse response) {
     User currentUser = getCurrentUser(principal);
 
     if (!passwordEncoder.matches(request.getCurrentPassword(), currentUser.getPassword())) {
@@ -74,6 +79,13 @@ public class UserService {
       SecurityContextHolder.getContext().setAuthentication(authentication);
       String jwt = jwtTokenProvider.generateToken(authentication);
 
+      Cookie cookie = new Cookie("jwt", jwt);
+      cookie.setHttpOnly(true);
+      cookie.setSecure(false);
+      cookie.setPath("/");
+      cookie.setMaxAge((int) (259200000));
+      response.addCookie(cookie);
+
       return new AuthResponse(jwt, mapToUserDto(currentUser));
     } catch (BadCredentialsException | NoSuchAlgorithmException e) {
       throw new UserUpdateException("Invalid credentials");
@@ -81,7 +93,10 @@ public class UserService {
   }
 
   @Transactional
-  public void deleteUser(DeleteUserRequest request, Principal principal) {
+  public void deleteUser(
+      DeleteUserRequest request,
+      Principal principal,
+      HttpServletResponse response) {
     User currentUser = getCurrentUser(principal);
     if (!passwordEncoder.matches(request.getPassword(), currentUser.getPassword())) {
       throw new UserDeleteException("Wrong password");
@@ -89,6 +104,13 @@ public class UserService {
 
     Long userId = currentUser.getId();
     userRepository.delete(currentUser);
+
+    Cookie cookie = new Cookie("jwt", null);
+    cookie.setHttpOnly(true);
+    cookie.setSecure(false);
+    cookie.setPath("/");
+    cookie.setMaxAge(0);
+    response.addCookie(cookie);
 
     if (userRepository.existsById(userId)) {
       throw new UserDeleteException("Failed to delete user");
