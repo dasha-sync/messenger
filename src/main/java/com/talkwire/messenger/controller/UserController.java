@@ -3,6 +3,7 @@ package com.talkwire.messenger.controller;
 import com.talkwire.messenger.dto.common.ApiResponse;
 import com.talkwire.messenger.dto.user.*;
 import com.talkwire.messenger.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
@@ -34,16 +35,17 @@ public class UserController {
   @PatchMapping("/update")
   public ResponseEntity<ApiResponse<AuthResponse>> updateUser(
       @Valid @RequestBody UpdateUserRequest request,
-      Principal principal) {
-    AuthResponse response = userService.updateUser(request, principal);
-    return ResponseEntity.ok(new ApiResponse<>("User updated successfully", response));
+      Principal principal, HttpServletResponse response) {
+    AuthResponse responseAuth = userService.updateUser(request, principal, response);
+    return ResponseEntity.ok(new ApiResponse<>("User updated successfully", responseAuth));
   }
 
   @DeleteMapping("/destroy")
   public ResponseEntity<ApiResponse<Void>> deleteUser(
       @Valid @RequestBody DeleteUserRequest request,
-      Principal principal) {
-    userService.deleteUser(request, principal);
+      Principal principal,
+      HttpServletResponse response) {
+    userService.deleteUser(request, principal, response);
     return ResponseEntity.ok(new ApiResponse<>("User deleted successfully", null));
   }
 
