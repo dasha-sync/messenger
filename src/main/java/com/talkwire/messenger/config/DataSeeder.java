@@ -72,7 +72,7 @@ public class DataSeeder {
 
           // Add two messages from each user in the chat
           for (ChatMember member : Arrays.asList(userChatMember, otherChatMember)) {
-            for (int j = 0; j < 2; j++) {
+            for (int j = 0; j < 5; j++) {
               Message message = new Message();
               message.setUser(member.getUser());
               message.setChat(chat);
