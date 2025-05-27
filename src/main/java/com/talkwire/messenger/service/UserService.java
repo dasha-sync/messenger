@@ -3,13 +3,8 @@ package com.talkwire.messenger.service;
 import com.talkwire.messenger.dto.user.*;
 import com.talkwire.messenger.exception.user.*;
 import com.talkwire.messenger.model.Chat;
-import com.talkwire.messenger.model.Contact;
-import com.talkwire.messenger.model.Request;
 import com.talkwire.messenger.model.User;
-import com.talkwire.messenger.repository.UserRepository;
-import com.talkwire.messenger.repository.ChatMemberRepository;
-import com.talkwire.messenger.repository.RequestRepository;
-import com.talkwire.messenger.repository.ContactRepository;
+import com.talkwire.messenger.repository.*;
 import com.talkwire.messenger.util.*;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -79,12 +74,9 @@ public class UserService {
       SecurityContextHolder.getContext().setAuthentication(authentication);
       String jwt = jwtTokenProvider.generateToken(authentication);
 
-      Cookie cookie = new Cookie("jwt", jwt);
-      cookie.setHttpOnly(true);
-      cookie.setSecure(false);
-      cookie.setPath("/");
-      cookie.setMaxAge((int) (259200000));
-      response.addCookie(cookie);
+      addCookie(response, "jwt", jwt, 259200000);
+      addCookie(response, "username", request.getUsername(), 259200000);
+      addCookie(response, "email", request.getEmail(), 259200000);
 
       return new AuthResponse(jwt, mapToUserDto(currentUser));
     } catch (BadCredentialsException | NoSuchAlgorithmException e) {
@@ -105,16 +97,13 @@ public class UserService {
     Long userId = currentUser.getId();
     userRepository.delete(currentUser);
 
-    Cookie cookie = new Cookie("jwt", null);
-    cookie.setHttpOnly(true);
-    cookie.setSecure(false);
-    cookie.setPath("/");
-    cookie.setMaxAge(0);
-    response.addCookie(cookie);
-
     if (userRepository.existsById(userId)) {
       throw new UserDeleteException("Failed to delete user");
     }
+
+    addCookie(response, "jwt", null, 0);
+    addCookie(response, "username", null, 0);
+    addCookie(response, "email", null, 0);
   }
 
   public UserRelationsResponse getUserRelations(Long userId, Principal principal) {
@@ -150,6 +139,15 @@ public class UserService {
     if (!currentUser.getId().equals(userId)) {
       throw new UserUpdateException("You can only update your own account");
     }
+  }
+
+  private void addCookie(HttpServletResponse response, String name, String value, int expiration) {
+    Cookie cookie = new Cookie(name, value);
+    cookie.setHttpOnly(true);
+    cookie.setSecure(false);
+    cookie.setPath("/");
+    cookie.setMaxAge(expiration);
+    response.addCookie(cookie);
   }
 
   private boolean applyUpdates(User user, UpdateUserRequest request) {

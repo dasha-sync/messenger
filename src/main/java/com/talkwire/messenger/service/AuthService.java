@@ -6,9 +6,16 @@ import com.talkwire.messenger.model.User;
 import com.talkwire.messenger.repository.UserRepository;
 import com.talkwire.messenger.util.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -51,16 +58,12 @@ public class AuthService {
       SecurityContextHolder.getContext().setAuthentication(authentication);
       String jwt = jwtTokenProvider.generateToken(authentication);
 
-      Cookie cookie = new Cookie("jwt", jwt);
-      cookie.setHttpOnly(true);
-      cookie.setSecure(false);
-      cookie.setPath("/");
-      cookie.setMaxAge((int) (259200000));
-
-      response.addCookie(cookie);
-
       User user = userRepository.findUserByUsername(request.getUsername())
           .orElseThrow(() -> new BadCredentialsException("User not found"));
+
+      addCookie(response, "jwt", jwt, 259200);
+      addCookie(response, "username", request.getUsername(), 259200);
+      addCookie(response, "email", user.getEmail(), 259200);
 
       return new AuthResponse(jwt, userService.mapToUserDto(user));
     } catch (BadCredentialsException | NoSuchAlgorithmException e) {
@@ -69,12 +72,31 @@ public class AuthService {
   }
 
   public void signout(HttpServletResponse response) {
-    Cookie cookie = new Cookie("jwt", null);
-    cookie.setHttpOnly(true);
-    cookie.setSecure(false); // true для HTTPS
-    cookie.setPath("/");
-    cookie.setMaxAge(0); // удалить куку
+    addCookie(response, "jwt", null, 0);
+    addCookie(response, "username", null, 0);
+    addCookie(response, "email", null, 0);
+  }
 
+  public CheckResponse checkAuth(HttpServletRequest request) {
+    Map<String, String> cookieMap = Optional.ofNullable(request.getCookies())
+        .map(Arrays::stream)
+        .orElseGet(Stream::empty)
+        .collect(Collectors.toMap(Cookie::getName, Cookie::getValue, (a, b) -> b));
+
+    String jwt = cookieMap.get("jwt");
+    String username = cookieMap.get("username");
+    String email = cookieMap.get("email");
+
+    boolean isAuthenticated = jwt != null;
+    return new CheckResponse(username, email, isAuthenticated);
+  }
+
+  private void addCookie(HttpServletResponse response, String name, String value, int expiration) {
+    Cookie cookie = new Cookie(name, value);
+    cookie.setHttpOnly(true);
+    cookie.setSecure(false);
+    cookie.setPath("/");
+    cookie.setMaxAge(expiration);
     response.addCookie(cookie);
   }
 }

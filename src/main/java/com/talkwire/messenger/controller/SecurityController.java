@@ -41,8 +41,7 @@ public class SecurityController {
   }
 
   @GetMapping("/check")
-  public ResponseEntity<Map<String, Boolean>> checkAuth(HttpServletRequest request) {
-    boolean isAuthenticated = request.getUserPrincipal() != null;
-    return ResponseEntity.ok(Map.of("authenticated", isAuthenticated));
+  public ResponseEntity<CheckResponse> checkAuth(HttpServletRequest request) {
+    return ResponseEntity.ok(authService.checkAuth(request));
   }
 }
