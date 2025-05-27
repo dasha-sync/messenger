@@ -25,7 +25,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     registry.addEndpoint("/ws")
         .addInterceptors(jwtHandshakeInterceptor)
         .setHandshakeHandler(new CustomHandshakeHandler())
+        .setAllowedOrigins("http://localhost:5173", "http://localhost:5174")
         .withSockJS();
-    // .setAllowedOrigins("http://localhost:63342") // TODO: поменять на фронтовый домен
   }
 }
