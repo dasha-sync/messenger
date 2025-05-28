@@ -11,8 +11,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@PreAuthorize("isAuthenticated()")
 @RequestMapping("/secured/contacts")
+@PreAuthorize("isAuthenticated()")
 @RequiredArgsConstructor
 public class ContactController {
   private final ContactService contactService;
