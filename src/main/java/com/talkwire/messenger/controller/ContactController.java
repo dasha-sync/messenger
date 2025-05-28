@@ -11,8 +11,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/secured/contacts")
 @PreAuthorize("isAuthenticated()")
+@RequestMapping("/secured/contacts")
 @RequiredArgsConstructor
 public class ContactController {
   private final ContactService contactService;
@@ -24,7 +24,7 @@ public class ContactController {
   }
 
   @DeleteMapping("/{contactId}/destroy")
-  public ResponseEntity<ApiResponse<Void>> deleteUserRequest(
+  public ResponseEntity<ApiResponse<Void>> deleteContactRequest(
       @PathVariable Long contactId,
       Principal principal) {
     contactService.deleteContact(contactId, principal);
