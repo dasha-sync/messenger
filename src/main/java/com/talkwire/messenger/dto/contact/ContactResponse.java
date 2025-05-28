@@ -1,5 +1,6 @@
 package com.talkwire.messenger.dto.contact;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -11,4 +12,5 @@ public class ContactResponse {
   private String fromUsername;
   private Long to;
   private String toUsername;
+  private String action;
 }
