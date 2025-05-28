@@ -5,7 +5,6 @@ import com.talkwire.messenger.exception.contact.*;
 import com.talkwire.messenger.model.*;
 import com.talkwire.messenger.repository.ContactRepository;
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -63,7 +62,8 @@ public class ContactService {
 
   private void ensureContactsDeleted(Contact contact, Contact reverseContact) {
     boolean contactStillExists = contactRepository.existsById(contact.getId());
-    boolean reverseStillExists = reverseContact != null && contactRepository.existsById(reverseContact.getId());
+    boolean reverseStillExists = reverseContact != null
+        && contactRepository.existsById(reverseContact.getId());
 
     if (contactStillExists || reverseStillExists) {
       throw new ContactOperationException("Failed to delete contact(s)");

@@ -2,11 +2,14 @@ package com.talkwire.messenger.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "chat_members")
 @Data
+@NoArgsConstructor
 public class ChatMember {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,4 +23,9 @@ public class ChatMember {
   @ManyToOne
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
+
+  public ChatMember(Chat chat, User user) {
+    this.chat = chat;
+    this.user = user;
+  }
 }

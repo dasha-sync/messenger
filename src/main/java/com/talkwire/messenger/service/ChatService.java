@@ -9,9 +9,11 @@ import jakarta.transaction.Transactional;
 import java.security.Principal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatService {
@@ -19,87 +21,75 @@ public class ChatService {
   private final ChatMemberRepository chatMemberRepository;
   private final UserRepository userRepository;
   private final UserService userService;
+  private final SimpMessagingTemplate messagingTemplate;
 
   public ChatListResponse getUserChats(Principal principal) {
-    User currentUser = userService.getCurrentUser(principal);
+    User currentUser = getCurrentUser(principal);
     List<ChatResponse> chats = chatMemberRepository.findChatsByUserId(currentUser.getId())
         .stream()
-        .map(chat -> mapToChatDto(chat, "GET", currentUser))
+        .map(chat -> toChatResponse(chat, "GET", currentUser))
         .toList();
 
     return new ChatListResponse(currentUser.getUsername(), chats);
   }
 
   public ChatResponse getChatById(Long chatId, Principal principal) {
-    User currentUser = userService.getCurrentUser(principal);
-    validateChatAccess(currentUser.getId(), chatId);
+    User currentUser = getCurrentUser(principal);
+    Chat chat = getChatForUser(chatId, currentUser.getId());
 
-    Chat chat = chatMemberRepository.findChatsByUserId(currentUser.getId())
-        .stream()
-        .filter(c -> c.getId().equals(chatId))
-        .findFirst()
-        .orElseThrow(() -> new ChatNotFoundException("Chat not found"));
-
-    return mapToChatDto(chat, "GET", currentUser);
+    return toChatResponse(chat, "GET", currentUser);
   }
 
   @Transactional
-  public ChatResponse createChat(@RequestBody CreateChatRequest request, Principal principal) {
-    User currentUser = userService.getCurrentUser(principal);
-    User targetUser = userRepository.findUserByUsername(request.getUsername())
-        .orElseThrow(() -> new UserNotFoundException("Target user not found"));
-    List<Chat> existingChats = chatMemberRepository
-        .findChatsByTwoUsers(currentUser.getId(), targetUser.getId());
+  public ChatResponse createChat(CreateChatRequest request, Principal principal) {
+    User currentUser = getCurrentUser(principal);
+    User targetUser = getUserByUsername(request.getUsername());
 
-    if (currentUser.getId().equals(targetUser.getId())) {
-      throw new ChatOperationException("Chat with yourself feature in develop");
-    }
+    validateDifferentUsers(currentUser, targetUser);
+    ensureChatDoesNotExist(currentUser, targetUser);
 
-    if (!existingChats.isEmpty()) {
-      throw new ChatOperationException("Chat already exists between these users");
-    }
+    Chat newChat = createNewChat(currentUser, targetUser);
+    Chat savedChat = chatRepository.save(newChat);
+    verifyChatPersistence(savedChat);
 
-    Chat chat = new Chat();
-    createChatMember(chat, currentUser);
-    createChatMember(chat, targetUser);
-    Chat savedChat = chatRepository.save(chat);
+    ChatResponse response = toChatResponse(savedChat, "CREATE", currentUser);
+    sendThrowWebSocket(response, currentUser);
 
-    if (savedChat.getId() == null || !chatRepository.existsById(savedChat.getId())) {
-      throw new ChatOperationException("Failed to create chat");
-    }
+    response.setName(savedChat.getName(targetUser));
+    sendThrowWebSocket(response, targetUser);
 
-    if (savedChat.getChatMembers().isEmpty()
-        || !chatMemberRepository.existsByChatId(savedChat.getId())) {
-      throw new ChatOperationException("Failed to create chat members");
-    }
-
-    return mapToChatDto(savedChat, "CREATE", currentUser);
+    return response;
   }
 
   @Transactional
   public ChatResponse deleteChat(Long chatId, Principal principal) {
-    User currentUser = userService.getCurrentUser(principal);
+    User currentUser = getCurrentUser(principal);
     Chat chat = chatRepository.findById(chatId)
         .orElseThrow(() -> new ChatNotFoundException("Chat not found"));
+    User targetUser = chatMemberRepository.findOtherUserInChat(chatId, currentUser.getId())
+        .orElseThrow(() -> new ChatOperationException("Second chat member not found"));
+
     validateChatAccess(currentUser.getId(), chatId);
     chatRepository.delete(chat);
 
-    if (chatRepository.existsById(chatId)) {
-      throw new ChatOperationException("Failed to delete chat");
+    if (chatRepository.existsById(chatId) || chatMemberRepository.existsByChatId(chatId)) {
+      throw new ChatOperationException("Failed to delete chat or its members");
     }
 
-    if (chatMemberRepository.existsByChatId(chatId)) {
-      throw new ChatOperationException("Failed to delete chat members");
-    }
+    ChatResponse response = toChatResponse(chat, "DELETE", currentUser);
+    sendThrowWebSocket(response, currentUser);
+    sendThrowWebSocket(response, targetUser);
 
-    return mapToChatDto(chat, "DELETE", currentUser);
+    return response;
   }
 
-  private void createChatMember(Chat chat, User user) {
-    ChatMember chatMember = new ChatMember();
-    chatMember.setChat(chat);
-    chatMember.setUser(user);
-    chat.addChatMember(chatMember);
+  private User getCurrentUser(Principal principal) {
+    return userService.getCurrentUser(principal);
+  }
+
+  private User getUserByUsername(String username) {
+    return userRepository.findUserByUsername(username)
+        .orElseThrow(() -> new UserNotFoundException("Target user not found"));
   }
 
   private void validateChatAccess(Long userId, Long chatId) {
@@ -108,7 +98,53 @@ public class ChatService {
     }
   }
 
-  private ChatResponse mapToChatDto(Chat chat, String action, User currentUser) {
-    return new ChatResponse(chat.getId(), chat.getName(currentUser), action);
+  private Chat getChatForUser(Long chatId, Long userId) {
+    return chatMemberRepository.findChatsByUserId(userId)
+        .stream()
+        .filter(chat -> chat.getId().equals(chatId))
+        .findFirst()
+        .orElseThrow(() -> new ChatNotFoundException("Chat not found"));
+  }
+
+  private ChatResponse toChatResponse(Chat chat, String action, User user) {
+    return new ChatResponse(chat.getId(), chat.getName(user), action);
+  }
+
+  private void validateDifferentUsers(User currentUser, User targetUser) {
+    if (currentUser.getId().equals(targetUser.getId())) {
+      throw new ChatOperationException("Chat with yourself is not allowed");
+    }
+  }
+
+  private void ensureChatDoesNotExist(User user1, User user2) {
+    boolean exists = !chatMemberRepository
+        .findChatsByTwoUsers(user1.getId(), user2.getId())
+        .isEmpty();
+
+    if (exists) {
+      throw new ChatOperationException("Chat already exists between these users");
+    }
+  }
+
+  private Chat createNewChat(User user1, User user2) {
+    Chat chat = new Chat();
+    chat.addChatMember(new ChatMember(chat, user1));
+    chat.addChatMember(new ChatMember(chat, user2));
+    return chat;
+  }
+
+  private void verifyChatPersistence(Chat chat) {
+    Long chatId = chat.getId();
+    if (chatId == null || !chatRepository.existsById(chatId)) {
+      throw new ChatOperationException("Failed to persist chat");
+    }
+
+    if (chat.getChatMembers().isEmpty() || !chatMemberRepository.existsByChatId(chatId)) {
+      throw new ChatOperationException("Chat members not persisted");
+    }
+  }
+
+  private void sendThrowWebSocket(ChatResponse response, User user) {
+    messagingTemplate.convertAndSend("/topic/chats/" + user.getUsername(), response);
   }
 }
