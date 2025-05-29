@@ -42,6 +42,16 @@ public class ContactService {
     sendThrowWebSocketIfExist(reverseContact);
   }
 
+  public ContactResponse mapToContactDto(Contact contact, String action) {
+    return new ContactResponse(
+        contact.getId(),
+        contact.getUser().getId(),
+        contact.getUser().getUsername(),
+        contact.getContact().getId(),
+        contact.getContact().getUsername(),
+        action);
+  }
+
   private Contact getContactById(Long contactId) {
     return contactRepository.findById(contactId)
         .orElseThrow(() -> new ContactNotFoundException("Contact not found"));
@@ -68,16 +78,6 @@ public class ContactService {
     if (contactStillExists || reverseStillExists) {
       throw new ContactOperationException("Failed to delete contact(s)");
     }
-  }
-
-  public ContactResponse mapToContactDto(Contact contact, String action) {
-    return new ContactResponse(
-        contact.getId(),
-        contact.getUser().getId(),
-        contact.getUser().getUsername(),
-        contact.getContact().getId(),
-        contact.getContact().getUsername(),
-        action);
   }
 
   private void validateContactAccess(Contact contact, Long userId) {

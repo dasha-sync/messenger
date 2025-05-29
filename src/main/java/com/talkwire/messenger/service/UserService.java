@@ -2,12 +2,10 @@ package com.talkwire.messenger.service;
 
 import com.talkwire.messenger.dto.user.*;
 import com.talkwire.messenger.exception.user.*;
-import com.talkwire.messenger.model.Chat;
 import com.talkwire.messenger.model.User;
 import com.talkwire.messenger.repository.*;
 import com.talkwire.messenger.util.*;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.*;
 import jakarta.transaction.Transactional;
 import java.security.*;
 import java.util.List;
@@ -21,7 +19,7 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class UserService {
-  private UserRepository userRepository;
+  private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final AuthenticationManager authenticationManager;
   private final JwtTokenProvider jwtTokenProvider;
@@ -30,10 +28,10 @@ public class UserService {
   private final ContactRepository contactRepository;
 
   public List<UserResponse> getUsers(FindUserRequest request) {
-    List<User> users = (isBlank(request.getUsername()) && isBlank(request.getEmail()))
+    List<User> users = isBlank(request.getUsername()) && isBlank(request.getEmail())
         ? userRepository.findAllByOrderByUsernameAsc()
         : userRepository.findByUsernameContainingIgnoreCaseAndEmailContainingIgnoreCase(
-            request.getUsername(), request.getEmail());
+        request.getUsername(), request.getEmail());
 
     return users.stream()
         .map(this::mapToUserDto)
@@ -41,10 +39,9 @@ public class UserService {
   }
 
   public UserResponse getNonCurrentUser(Long userId) {
-    User user = userRepository.findById(userId)
+    return userRepository.findById(userId)
+        .map(this::mapToUserDto)
         .orElseThrow(() -> new UserNotFoundException("User not found"));
-
-    return mapToUserDto(user);
   }
 
   public AuthResponse updateUser(
@@ -63,25 +60,13 @@ public class UserService {
 
     userRepository.save(currentUser);
 
-    try {
-      Authentication authentication = authenticationManager.authenticate(
-          new UsernamePasswordAuthenticationToken(
-              currentUser.getUsername(),
-              request.getNewPassword().isBlank()
-                  ? request.getCurrentPassword()
-                  : request.getNewPassword()));
+    String rawPassword = request.getNewPassword().isBlank()
+        ? request.getCurrentPassword() : request.getNewPassword();
+    String jwt = authenticateAndGenerateToken(currentUser.getUsername(), rawPassword);
 
-      SecurityContextHolder.getContext().setAuthentication(authentication);
-      String jwt = jwtTokenProvider.generateToken(authentication);
+    setAuthCookies(response, jwt, request.getUsername(), request.getEmail());
 
-      addCookie(response, "jwt", jwt, 259200000);
-      addCookie(response, "username", request.getUsername(), 259200000);
-      addCookie(response, "email", request.getEmail(), 259200000);
-
-      return new AuthResponse(jwt, mapToUserDto(currentUser));
-    } catch (BadCredentialsException | NoSuchAlgorithmException e) {
-      throw new UserUpdateException("Invalid credentials");
-    }
+    return new AuthResponse(jwt, mapToUserDto(currentUser));
   }
 
   @Transactional
@@ -90,6 +75,7 @@ public class UserService {
       Principal principal,
       HttpServletResponse response) {
     User currentUser = getCurrentUser(principal);
+
     if (!passwordEncoder.matches(request.getPassword(), currentUser.getPassword())) {
       throw new UserDeleteException("Wrong password");
     }
@@ -101,9 +87,7 @@ public class UserService {
       throw new UserDeleteException("Failed to delete user");
     }
 
-    addCookie(response, "jwt", null, 0);
-    addCookie(response, "username", null, 0);
-    addCookie(response, "email", null, 0);
+    clearAuthCookies(response);
   }
 
   public UserRelationsResponse getUserRelations(Long userId, Principal principal) {
@@ -114,10 +98,7 @@ public class UserService {
     }
 
     UserRelationsResponse response = new UserRelationsResponse();
-
-    setChatRelation(response, currentUserId, userId);
-    setContactRelation(response, currentUserId, userId);
-    setRequestRelations(response, currentUserId, userId);
+    setUserRelations(response, currentUserId, userId);
 
     return response;
   }
@@ -131,23 +112,10 @@ public class UserService {
     return new UserResponse(user.getId(), user.getUsername(), user.getEmail());
   }
 
+  // === Private Helpers ===
+
   private boolean isBlank(String value) {
     return value == null || value.isBlank();
-  }
-
-  private void validateUserAccess(Long userId, User currentUser) {
-    if (!currentUser.getId().equals(userId)) {
-      throw new UserUpdateException("You can only update your own account");
-    }
-  }
-
-  private void addCookie(HttpServletResponse response, String name, String value, int expiration) {
-    Cookie cookie = new Cookie(name, value);
-    cookie.setHttpOnly(true);
-    cookie.setSecure(false);
-    cookie.setPath("/");
-    cookie.setMaxAge(expiration);
-    response.addCookie(cookie);
   }
 
   private boolean applyUpdates(User user, UpdateUserRequest request) {
@@ -176,22 +144,50 @@ public class UserService {
     return !isBlank(newValue) && !newValue.equals(currentValue);
   }
 
-  private void setChatRelation(UserRelationsResponse response, Long currentUserId, Long userId) {
-    List<Chat> chats = chatMemberRepository.findChatsByTwoUsers(currentUserId, userId);
-    if (!chats.isEmpty()) {
-      response.setHasChat(chats.get(0).getId());
+  private String authenticateAndGenerateToken(String username, String password) {
+    try {
+      Authentication authentication = authenticationManager.authenticate(
+          new UsernamePasswordAuthenticationToken(username, password));
+      SecurityContextHolder.getContext().setAuthentication(authentication);
+      return jwtTokenProvider.generateToken(authentication);
+    } catch (BadCredentialsException | NoSuchAlgorithmException e) {
+      throw new UserUpdateException("Invalid credentials");
     }
   }
 
-  private void setContactRelation(UserRelationsResponse response, Long currentUserId, Long userId) {
-    contactRepository.findByUserIdAndContactId(currentUserId, userId)
-        .ifPresent(contact -> response.setHasContact(contact.getId()));
+  private void setAuthCookies(
+      HttpServletResponse response,
+      String jwt,
+      String username,
+      String email) {
+    addCookie(response, "jwt", jwt, 259200000);
+    addCookie(response, "username", username, 259200000);
+    addCookie(response, "email", email, 259200000);
   }
 
-  private void setRequestRelations(
-      UserRelationsResponse response,
-      Long currentUserId,
-      Long userId) {
+  private void clearAuthCookies(HttpServletResponse response) {
+    addCookie(response, "jwt", null, 0);
+    addCookie(response, "username", null, 0);
+    addCookie(response, "email", null, 0);
+  }
+
+  private void addCookie(HttpServletResponse response, String name, String value, int expiration) {
+    Cookie cookie = new Cookie(name, value);
+    cookie.setHttpOnly(true);
+    cookie.setSecure(false);
+    cookie.setPath("/");
+    cookie.setMaxAge(expiration);
+    response.addCookie(cookie);
+  }
+
+  private void setUserRelations(UserRelationsResponse response, Long currentUserId, Long userId) {
+    chatMemberRepository.findChatsByTwoUsers(currentUserId, userId).stream()
+        .findFirst()
+        .ifPresent(chat -> response.setHasChat(chat.getId()));
+
+    contactRepository.findByUserIdAndContactId(currentUserId, userId)
+        .ifPresent(contact -> response.setHasContact(contact.getId()));
+
     requestRepository.findByUserIdAndContactId(currentUserId, userId)
         .ifPresent(request -> response.setHasOutgoingRequest(request.getId()));
 
@@ -199,3 +195,4 @@ public class UserService {
         .ifPresent(request -> response.setHasIncomingRequest(request.getId()));
   }
 }
+
