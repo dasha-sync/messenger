@@ -28,13 +28,19 @@ public class MessageController {
   public ResponseEntity<ApiResponse<List<MessageResponse>>> getMessages(
       @PathVariable Long chatId,
       Principal principal) {
+
     List<MessageResponse> messages = messageService.getMessages(chatId, principal);
+    ApiResponse<List<MessageResponse>> response = new ApiResponse<>(
+        "Messages retrieved successfully",
+        messages
+    );
 
     messagingTemplate.convertAndSendToUser(
         principal.getName(),
         "/queue/chats/" + chatId + "/messages",
-        new ApiResponse<>("Messages retrieved successfully", messages));
-    return ResponseEntity.ok(new ApiResponse<>("Messages retrieved successfully", messages));
+        response);
+
+    return ResponseEntity.ok(response);
   }
 
   @MessageMapping("/secured/chats/{chatId}/messages/create")
@@ -43,17 +49,8 @@ public class MessageController {
       @DestinationVariable Long chatId,
       CreateMessageRequest request,
       StompHeaderAccessor headerAccessor) {
-    Principal principal = headerAccessor.getUser();
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-    if (auth == null && principal != null) {
-      auth = new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
-    }
-
-    if (auth == null) {
-      throw new AuthenticationCredentialsNotFoundException("No authentication found");
-    }
-
+    Authentication auth = resolveAuthentication(headerAccessor);
     return messageService.createMessage(chatId, request, auth);
   }
 
@@ -64,17 +61,14 @@ public class MessageController {
       @DestinationVariable Long messageId,
       UpdateMessageRequest request,
       StompHeaderAccessor headerAccessor) {
-    Principal principal = headerAccessor.getUser();
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-    if (auth == null && principal != null) {
-      auth = new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
-    }
-
-    if (auth == null) {
-      throw new AuthenticationCredentialsNotFoundException("No authentication found");
-    }
-    return messageService.updateMessage(chatId, messageId, request, principal);
+    Authentication auth = resolveAuthentication(headerAccessor);
+    return messageService.updateMessage(
+        chatId,
+        messageId,
+        request,
+        (Principal) auth.getPrincipal()
+    );
   }
 
   @MessageMapping("/secured/chats/{chatId}/messages/{messageId}/destroy")
@@ -83,17 +77,24 @@ public class MessageController {
       @DestinationVariable Long chatId,
       @DestinationVariable Long messageId,
       StompHeaderAccessor headerAccessor) {
-    Principal principal = headerAccessor.getUser();
+
+    Authentication auth = resolveAuthentication(headerAccessor);
+    return messageService.deleteMessage(chatId, messageId, (Principal) auth.getPrincipal());
+  }
+
+  private Authentication resolveAuthentication(StompHeaderAccessor headerAccessor) {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    Principal principal = headerAccessor.getUser();
 
     if (auth == null && principal != null) {
       auth = new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
+      SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
     if (auth == null) {
       throw new AuthenticationCredentialsNotFoundException("No authentication found");
     }
 
-    return messageService.deleteMessage(chatId, messageId, principal);
+    return auth;
   }
 }

@@ -8,6 +8,10 @@ import lombok.Data;
 
 @Data
 public class SigninRequest {
+  @Pattern(
+      regexp = "^[a-z][a-z0-9_.-]*$",
+      message = "Username can only contain Latin lowercase letters,"
+          + "numbers, '_', '-', '.' and must begin with the letter")
   @Size(min = 3, max = 20, message = "Username must contain 3 - 20 symbols")
   private String username;
 

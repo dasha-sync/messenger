@@ -21,8 +21,8 @@ public class UserController {
 
   @PostMapping
   public ResponseEntity<ApiResponse<List<UserResponse>>> getUsers(
-      @RequestBody FindUserRequest request) {
-    List<UserResponse> users = userService.getUsers(request);
+      @RequestBody FindUserRequest request, Principal principal) {
+    List<UserResponse> users = userService.getUsers(request, principal);
     return ResponseEntity.ok(new ApiResponse<>("Users retrieved successfully", users));
   }
 

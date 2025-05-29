@@ -3,7 +3,6 @@ package com.talkwire.messenger.controller;
 import com.talkwire.messenger.dto.common.ApiResponse;
 import com.talkwire.messenger.dto.request.RequestResponse;
 import com.talkwire.messenger.service.RequestService;
-import jakarta.transaction.Transactional;
 import java.security.Principal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

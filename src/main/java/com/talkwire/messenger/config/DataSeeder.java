@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-
 @Configuration
 public class DataSeeder {
   private static final Logger logger = LoggerFactory.getLogger(DataSeeder.class);
@@ -27,10 +26,13 @@ public class DataSeeder {
       PasswordEncoder passwordEncoder) {
 
     return args -> {
-      long userCount = userRepository.count();
-      if (userCount > 0) {
-        logger.info("Database is not empty ({} users found). Skipping seed data creation.",
-            userCount);
+      if (userRepository.count() > 0
+          || chatRepository.count() > 0
+          || contactRepository.count() > 0
+          || requestRepository.count() > 0
+          || messageRepository.count() > 0
+          || chatMemberRepository.count() > 0) {
+        logger.info("Database is not empty. Skipping seed data creation.");
         return;
       }
 
@@ -50,140 +52,73 @@ public class DataSeeder {
 
       Set<String> createdContacts = new HashSet<>();
       Set<String> createdRequests = new HashSet<>();
+      Set<Set<Long>> existingChatPairs = new HashSet<>();
 
       for (User user : users) {
         logger.info("Processing user: {}", user.getUsername());
 
-        for (int i = 0; i < 10; i++) {
-          Chat chat = new Chat();
-          chat.setName("default");
-          chatRepository.save(chat);
-
-          ChatMember userChatMember = new ChatMember();
-          userChatMember.setUser(user);
-          userChatMember.setChat(chat);
-          chatMemberRepository.save(userChatMember);
-
+        int chatsCreated = 0;
+        int chatAttempts = 0;
+        while (chatsCreated < 10 && chatAttempts < 100) {
+          chatAttempts++;
           User randomUser = getRandomUser(users, user);
-          ChatMember otherChatMember = new ChatMember();
-          otherChatMember.setUser(randomUser);
-          otherChatMember.setChat(chat);
-          chatMemberRepository.save(otherChatMember);
-
-          // Add two messages from each user in the chat
-          for (ChatMember member : Arrays.asList(userChatMember, otherChatMember)) {
-            for (int j = 0; j < 5; j++) {
-              Message message = new Message();
-              message.setUser(member.getUser());
-              message.setChat(chat);
-              message.setText(faker.lorem().sentence()); // Generate random text
-              messageRepository.save(message);
-              logger.info("Created message from {} in chat {}: {}",
-                  member.getUser().getUsername(),
-                  chat.getId(),
-                  message.getText());
-            }
+          if (randomUser != null && createUniqueChat(
+              user,
+              randomUser,
+              chatRepository,
+              chatMemberRepository,
+              messageRepository,
+              existingChatPairs,
+              faker)) {
+            chatsCreated++;
           }
         }
-        logger.info("Created 10 chats with messages for user: {}", user.getUsername());
 
         int contactsCreated = 0;
-        int attempts = 0;
-        while (contactsCreated < 5 && attempts < 100) {
-          attempts++;
-          User contactUser = getRandomUser(users, user);
-          if (contactUser != null) {
-            String contactKey = getRelationshipKey(user.getId(), contactUser.getId());
-            String reverseKey = getRelationshipKey(contactUser.getId(), user.getId());
-
-            if (!createdContacts.contains(contactKey) && !createdContacts.contains(reverseKey)) {
-              try {
-                Contact contact = new Contact();
-                contact.setUser(user);
-                contact.setContact(contactUser);
-                contactRepository.save(contact);
-                createdContacts.add(contactKey);
-                contactsCreated++;
-                logger.info("Created contact: {} -> {}",
-                    user.getUsername(),
-                    contactUser.getUsername());
-              } catch (Exception e) {
-                logger.error("Failed to create contact: {} -> {}",
-                    user.getUsername(),
-                    contactUser.getUsername(), e);
-              }
-            }
+        int contactAttempts = 0;
+        while (contactsCreated < 5 && contactAttempts < 100) {
+          contactAttempts++;
+          User randomUser = getRandomUser(users, user);
+          if (randomUser != null
+              && createBidirectionalContact(user, randomUser, contactRepository, createdContacts)) {
+            contactsCreated++;
           }
         }
-        logger.info("Created {} contacts for user: {}", contactsCreated, user.getUsername());
 
-        // Create 5 outgoing requests
         int outgoingRequestsCreated = 0;
-        attempts = 0;
+        int attempts = 0;
         while (outgoingRequestsCreated < 5 && attempts < 100) {
           attempts++;
-          User contactUser = getRandomUser(users, user);
-          if (contactUser != null) {
-            String requestKey = getRelationshipKey(user.getId(), contactUser.getId());
-            String reverseKey = getRelationshipKey(contactUser.getId(), user.getId());
-
-            if (!createdRequests.contains(requestKey) && !createdRequests.contains(reverseKey)
-                && !createdContacts.contains(requestKey) && !createdContacts.contains(reverseKey)) {
-              try {
-                Request request = new Request();
-                request.setUser(user);
-                request.setContact(contactUser);
-                requestRepository.save(request);
-                createdRequests.add(requestKey);
-                outgoingRequestsCreated++;
-                logger.info("Created outgoing request: {} -> {}",
-                    user.getUsername(),
-                    contactUser.getUsername());
-              } catch (Exception e) {
-                logger.error("Failed to create outgoing request: {} -> {}",
-                    user.getUsername(),
-                    contactUser.getUsername(), e);
-              }
-            }
+          User randomUser = getRandomUser(users, user);
+          if (randomUser != null && !relationshipExists(getRelationshipKey(
+                  user.getId(),
+                  randomUser.getId()),
+                  getRelationshipKey(randomUser.getId(), user.getId()),
+                  createdContacts)
+              && createRequest(
+                  user,
+              randomUser,
+              requestRepository,
+              createdRequests,
+              createdContacts)) {
+            outgoingRequestsCreated++;
           }
         }
-        logger.info("Created {} outgoing requests for user: {}",
-            outgoingRequestsCreated,
-            user.getUsername());
 
-        // Create 5 incoming requests
         int incomingRequestsCreated = 0;
         attempts = 0;
         while (incomingRequestsCreated < 5 && attempts < 100) {
           attempts++;
-          User requestUser = getRandomUser(users, user);
-          if (requestUser != null) {
-            String requestKey = getRelationshipKey(requestUser.getId(), user.getId());
-            String reverseKey = getRelationshipKey(user.getId(), requestUser.getId());
-
-            if (!createdRequests.contains(requestKey) && !createdRequests.contains(reverseKey)
-                && !createdContacts.contains(requestKey) && !createdContacts.contains(reverseKey)) {
-              try {
-                Request request = new Request();
-                request.setUser(requestUser);
-                request.setContact(user);
-                requestRepository.save(request);
-                createdRequests.add(requestKey);
-                incomingRequestsCreated++;
-                logger.info("Created incoming request: {} -> {}",
-                    requestUser.getUsername(),
-                    user.getUsername());
-              } catch (Exception e) {
-                logger.error("Failed to create incoming request: {} -> {}",
-                    requestUser.getUsername(),
-                    user.getUsername(), e);
-              }
-            }
+          User randomUser = getRandomUser(users, user);
+          if (randomUser != null
+              && !relationshipExists(getRelationshipKey(randomUser.getId(), user.getId()),
+              getRelationshipKey(user.getId(), randomUser.getId()),
+              createdContacts)
+              && createRequest(
+                  randomUser, user, requestRepository, createdRequests, createdContacts)) {
+            incomingRequestsCreated++;
           }
         }
-        logger.info("Created {} incoming requests for user: {}",
-            incomingRequestsCreated,
-            user.getUsername());
       }
 
       logger.info("Seed data creation completed successfully");
@@ -201,5 +136,106 @@ public class DataSeeder {
 
   private String getRelationshipKey(Long userId1, Long userId2) {
     return userId1 + ":" + userId2;
+  }
+
+  private boolean relationshipExists(String key1, String key2, Set<String> existing) {
+    return existing.contains(key1) || existing.contains(key2);
+  }
+
+  private boolean createBidirectionalContact(User user1, User user2,
+                                             ContactRepository contactRepository,
+                                             Set<String> createdContacts) {
+    String key1 = getRelationshipKey(user1.getId(), user2.getId());
+    String key2 = getRelationshipKey(user2.getId(), user1.getId());
+
+    if (relationshipExists(key1, key2, createdContacts)) {
+      return false;
+    }
+
+    try {
+      Contact c1 = new Contact();
+      c1.setUser(user1);
+      c1.setContact(user2);
+      contactRepository.save(c1);
+
+      Contact c2 = new Contact();
+      c2.setUser(user2);
+      c2.setContact(user1);
+      contactRepository.save(c2);
+
+      createdContacts.add(key1);
+      createdContacts.add(key2);
+      return true;
+    } catch (Exception e) {
+      logger.error(
+          "Failed to create bidirectional contact: {} <-> {}",
+          user1.getUsername(),
+          user2.getUsername(), e);
+      return false;
+    }
+  }
+
+  private boolean createRequest(User from, User to,
+                                RequestRepository requestRepository,
+                                Set<String> createdRequests,
+                                Set<String> createdContacts) {
+    String key = getRelationshipKey(from.getId(), to.getId());
+    String reverseKey = getRelationshipKey(to.getId(), from.getId());
+
+    if (relationshipExists(key, reverseKey, createdRequests)
+        || relationshipExists(key, reverseKey, createdContacts)) {
+      return false;
+    }
+
+    try {
+      Request request = new Request();
+      request.setUser(from);
+      request.setContact(to);
+      requestRepository.save(request);
+      createdRequests.add(key);
+      return true;
+    } catch (Exception e) {
+      logger.error("Failed to create request: {} -> {}", from.getUsername(), to.getUsername(), e);
+      return false;
+    }
+  }
+
+  private boolean createUniqueChat(User u1, User u2,
+                                   ChatRepository chatRepository,
+                                   ChatMemberRepository chatMemberRepository,
+                                   MessageRepository messageRepository,
+                                   Set<Set<Long>> existingChatPairs,
+                                   Faker faker) {
+    Set<Long> pair = new HashSet<>(Arrays.asList(u1.getId(), u2.getId()));
+    if (existingChatPairs.contains(pair)) {
+      return false;
+    }
+
+    Chat chat = new Chat();
+    chat.setName("default");
+    chatRepository.save(chat);
+
+    ChatMember cm1 = new ChatMember();
+    cm1.setUser(u1);
+    cm1.setChat(chat);
+    chatMemberRepository.save(cm1);
+
+    ChatMember cm2 = new ChatMember();
+    cm2.setUser(u2);
+    cm2.setChat(chat);
+    chatMemberRepository.save(cm2);
+
+    for (ChatMember member : Arrays.asList(cm1, cm2)) {
+      for (int j = 0; j < 5; j++) {
+        Message message = new Message();
+        message.setUser(member.getUser());
+        message.setChat(chat);
+        message.setText(faker.lorem().sentence());
+        messageRepository.save(message);
+      }
+    }
+
+    existingChatPairs.add(pair);
+    return true;
   }
 }

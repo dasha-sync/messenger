@@ -1,6 +1,5 @@
 package com.talkwire.messenger.repository;
 
-import com.talkwire.messenger.model.Message;
 import com.talkwire.messenger.model.Request;
 import java.util.List;
 import java.util.Optional;

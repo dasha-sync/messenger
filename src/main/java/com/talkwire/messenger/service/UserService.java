@@ -27,13 +27,15 @@ public class UserService {
   private final RequestRepository requestRepository;
   private final ContactRepository contactRepository;
 
-  public List<UserResponse> getUsers(FindUserRequest request) {
+  public List<UserResponse> getUsers(FindUserRequest request, Principal principal) {
+    User currentUser = getCurrentUser(principal);
     List<User> users = isBlank(request.getUsername()) && isBlank(request.getEmail())
         ? userRepository.findAllByOrderByUsernameAsc()
         : userRepository.findByUsernameContainingIgnoreCaseAndEmailContainingIgnoreCase(
-        request.getUsername(), request.getEmail());
+            request.getUsername(), request.getEmail());
 
     return users.stream()
+        .filter(user -> !user.getId().equals(currentUser.getId()))
         .map(this::mapToUserDto)
         .toList();
   }
@@ -61,7 +63,8 @@ public class UserService {
     userRepository.save(currentUser);
 
     String rawPassword = request.getNewPassword().isBlank()
-        ? request.getCurrentPassword() : request.getNewPassword();
+        ? request.getCurrentPassword()
+        : request.getNewPassword();
     String jwt = authenticateAndGenerateToken(currentUser.getUsername(), rawPassword);
 
     setAuthCookies(response, jwt, request.getUsername(), request.getEmail());
@@ -193,4 +196,3 @@ public class UserService {
         .ifPresent(request -> response.setHasIncomingRequest(request.getId()));
   }
 }
-
