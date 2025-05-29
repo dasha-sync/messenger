@@ -112,8 +112,6 @@ public class UserService {
     return new UserResponse(user.getId(), user.getUsername(), user.getEmail());
   }
 
-  // === Private Helpers ===
-
   private boolean isBlank(String value) {
     return value == null || value.isBlank();
   }
