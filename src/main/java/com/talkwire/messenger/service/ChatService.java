@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -25,9 +26,10 @@ public class ChatService {
 
   public ChatListResponse getUserChats(Principal principal) {
     User currentUser = getCurrentUser(principal);
+
     List<ChatResponse> chats = chatMemberRepository.findChatsByUserId(currentUser.getId())
         .stream()
-        .map(chat -> toChatResponse(chat, "GET", currentUser))
+        .map(chat -> mapToChatResponse(chat, "GET", currentUser))
         .toList();
 
     return new ChatListResponse(currentUser.getUsername(), chats);
@@ -37,7 +39,7 @@ public class ChatService {
     User currentUser = getCurrentUser(principal);
     Chat chat = getChatForUser(chatId, currentUser.getId());
 
-    return toChatResponse(chat, "GET", currentUser);
+    return mapToChatResponse(chat, "GET", currentUser);
   }
 
   @Transactional
@@ -45,40 +47,44 @@ public class ChatService {
     User currentUser = getCurrentUser(principal);
     User targetUser = getUserByUsername(request.getUsername());
 
-    validateDifferentUsers(currentUser, targetUser);
-    ensureChatDoesNotExist(currentUser, targetUser);
+    if (currentUser.getId().equals(targetUser.getId())) {
+      throw new ChatOperationException("Chat with yourself is not allowed");
+    }
 
-    Chat newChat = createNewChat(currentUser, targetUser);
-    Chat savedChat = chatRepository.save(newChat);
-    verifyChatPersistence(savedChat);
+    if (chatExistsBetween(currentUser, targetUser)) {
+      throw new ChatOperationException("Chat already exists between these users");
+    }
 
-    ChatResponse response = toChatResponse(savedChat, "CREATE", currentUser);
-    sendThrowWebSocket(response, currentUser);
+    Chat chat = createAndPersistChat(currentUser, targetUser);
 
-    response.setName(savedChat.getName(targetUser));
-    sendThrowWebSocket(response, targetUser);
+    ChatResponse responseForCurrentUser = mapToChatResponse(chat, "CREATE", currentUser);
+    ChatResponse responseForTargetUser = mapToChatResponse(chat, "CREATE", targetUser);
 
-    return response;
+    sendWebSocketUpdate(responseForCurrentUser, currentUser);
+    sendWebSocketUpdate(responseForTargetUser, targetUser);
+
+    return responseForCurrentUser;
   }
 
   @Transactional
   public ChatResponse deleteChat(Long chatId, Principal principal) {
     User currentUser = getCurrentUser(principal);
+
+    validateChatAccess(chatId, currentUser.getId());
+
     Chat chat = chatRepository.findById(chatId)
         .orElseThrow(() -> new ChatNotFoundException("Chat not found"));
+
     User targetUser = chatMemberRepository.findOtherUserInChat(chatId, currentUser.getId())
         .orElseThrow(() -> new ChatOperationException("Second chat member not found"));
 
-    validateChatAccess(currentUser.getId(), chatId);
     chatRepository.delete(chat);
+    verifyChatDeletion(chatId);
 
-    if (chatRepository.existsById(chatId) || chatMemberRepository.existsByChatId(chatId)) {
-      throw new ChatOperationException("Failed to delete chat or its members");
-    }
+    ChatResponse response = mapToChatResponse(chat, "DELETE", currentUser);
 
-    ChatResponse response = toChatResponse(chat, "DELETE", currentUser);
-    sendThrowWebSocket(response, currentUser);
-    sendThrowWebSocket(response, targetUser);
+    sendWebSocketUpdate(response, currentUser);
+    sendWebSocketUpdate(response, targetUser);
 
     return response;
   }
@@ -92,9 +98,38 @@ public class ChatService {
         .orElseThrow(() -> new UserNotFoundException("Target user not found"));
   }
 
-  private void validateChatAccess(Long userId, Long chatId) {
+  private void validateChatAccess(Long chatId, Long userId) {
     if (!chatMemberRepository.existsByUserIdAndChatId(userId, chatId)) {
       throw new ChatAccessDeniedException("Access denied: You are not a member of this chat");
+    }
+  }
+
+  private boolean chatExistsBetween(User user1, User user2) {
+    return !chatMemberRepository.findChatsByTwoUsers(user1.getId(), user2.getId()).isEmpty();
+  }
+
+  private Chat createAndPersistChat(User user1, User user2) {
+    Chat chat = new Chat();
+    chat.addChatMember(new ChatMember(chat, user1));
+    chat.addChatMember(new ChatMember(chat, user2));
+
+    Chat savedChat = chatRepository.save(chat);
+    Long chatId = savedChat.getId();
+
+    if (chatId == null || !chatRepository.existsById(chatId)) {
+      throw new ChatOperationException("Failed to persist chat");
+    }
+
+    if (savedChat.getChatMembers().isEmpty() || !chatMemberRepository.existsByChatId(chatId)) {
+      throw new ChatOperationException("Chat members not persisted");
+    }
+
+    return savedChat;
+  }
+
+  private void verifyChatDeletion(Long chatId) {
+    if (chatRepository.existsById(chatId) || chatMemberRepository.existsByChatId(chatId)) {
+      throw new ChatOperationException("Failed to delete chat or its members");
     }
   }
 
@@ -106,45 +141,11 @@ public class ChatService {
         .orElseThrow(() -> new ChatNotFoundException("Chat not found"));
   }
 
-  private ChatResponse toChatResponse(Chat chat, String action, User user) {
+  private ChatResponse mapToChatResponse(Chat chat, String action, User user) {
     return new ChatResponse(chat.getId(), chat.getName(user), action);
   }
 
-  private void validateDifferentUsers(User currentUser, User targetUser) {
-    if (currentUser.getId().equals(targetUser.getId())) {
-      throw new ChatOperationException("Chat with yourself is not allowed");
-    }
-  }
-
-  private void ensureChatDoesNotExist(User user1, User user2) {
-    boolean exists = !chatMemberRepository
-        .findChatsByTwoUsers(user1.getId(), user2.getId())
-        .isEmpty();
-
-    if (exists) {
-      throw new ChatOperationException("Chat already exists between these users");
-    }
-  }
-
-  private Chat createNewChat(User user1, User user2) {
-    Chat chat = new Chat();
-    chat.addChatMember(new ChatMember(chat, user1));
-    chat.addChatMember(new ChatMember(chat, user2));
-    return chat;
-  }
-
-  private void verifyChatPersistence(Chat chat) {
-    Long chatId = chat.getId();
-    if (chatId == null || !chatRepository.existsById(chatId)) {
-      throw new ChatOperationException("Failed to persist chat");
-    }
-
-    if (chat.getChatMembers().isEmpty() || !chatMemberRepository.existsByChatId(chatId)) {
-      throw new ChatOperationException("Chat members not persisted");
-    }
-  }
-
-  private void sendThrowWebSocket(ChatResponse response, User user) {
+  private void sendWebSocketUpdate(ChatResponse response, User user) {
     messagingTemplate.convertAndSend("/topic/chats/" + user.getUsername(), response);
   }
 }

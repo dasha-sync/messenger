@@ -1,6 +1,5 @@
 package com.talkwire.messenger.service;
 
-import com.talkwire.messenger.dto.chat.ChatResponse;
 import com.talkwire.messenger.dto.message.*;
 import com.talkwire.messenger.exception.chat.*;
 import com.talkwire.messenger.exception.message.*;
