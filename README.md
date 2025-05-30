@@ -5,12 +5,12 @@ a.k.a. Telegram
 [Frontend](https://github.com/dasha-sync/messenger-front)
 
 ## Environment:
-- java 17
-- spring 3.4.4
-- swagger
-- websockets
-- postgresql
-- jwt, HttpOnly cookies
+- Java 17
+- Spring 3.4.4
+- Swagger
+- Websockets
+- PostgreSQL
+- JWT, HttpOnly cookies
 
 ## Run in docker.
 ```sh
