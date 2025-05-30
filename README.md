@@ -10,7 +10,6 @@ a.k.a. Telegram
 - swagger
 - websockets
 - postgresql
-- rebbitmq
 
 ## Run in docker.
 ```sh
