@@ -10,6 +10,7 @@ a.k.a. Telegram
 - swagger
 - websockets
 - postgresql
+- jwt, httponly cookies
 
 ## Run in docker.
 ```sh
