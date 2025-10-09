@@ -42,13 +42,3 @@ jobs:
       - name: Push Docker image
         run: docker push dashasync/messenger-app:latest
 
-  notify:
-    needs: [build-and-push]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger infra workflow
-        run: |
-          curl -X POST https://api.github.com/repos/dasha-sync/messenger-infra/dispatches \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.INFRA_TOKEN }}" \
-            -d '{"event_type":"update-submodules"}'
