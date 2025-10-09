@@ -1,6 +1,8 @@
 # Talk Wire
 a.k.a. Telegram
 
+https://talkwire.up.railway.app/welcome
+
 [Infrastructure](https://github.com/dasha-sync/messenger-infra)
 [Frontend](https://github.com/dasha-sync/messenger-front)
 
